@@ -1535,7 +1535,7 @@ class CryptoTrader:
             
             # 找到输入框
             amount_input = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, '//*[@id="__pm_layout"]/div/div[2]/div/div[1]/div/div[2]/div[2]/div[2]/input'))
+                EC.presence_of_element_located((By.XPATH, '//input[@class="c-ecshmo c-ecshmo-ielLCmU-css"]'))
             )
             
             # 清空输入框
