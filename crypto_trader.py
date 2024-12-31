@@ -120,36 +120,36 @@ class CryptoTrader:
                     'url': ''
                 },
                 'trading': {
-                    'Yes0': {'target_price': 0.53, 'amount': 0.0},
-                    'Yes1': {'target_price': 0.53, 'amount': 0.0},
-                    'Yes2': {'target_price': 0.53, 'amount': 0.0},
-                    'Yes3': {'target_price': 0.53, 'amount': 0.0},
-                    'Yes4': {'target_price': 0.53, 'amount': 0.0},
-                    'Yes5': {'target_price': 0.53, 'amount': 0.0},
-                    'Yes6': {'target_price': 0.53, 'amount': 0.0},
-                    'Yes7': {'target_price': 0.53, 'amount': 0.0},
-                    'Yes8': {'target_price': 0.53, 'amount': 0.0},
-                    'Yes9': {'target_price': 0.53, 'amount': 0.0},
-                    'Yes10': {'target_price': 0.53, 'amount': 0.0},
-                    'Yes11': {'target_price': 0.53, 'amount': 0.0},
-                    'Yes12': {'target_price': 0.53, 'amount': 0.0},
-                    'Yes13': {'target_price': 0.53, 'amount': 0.0},
-                    'Yes14': {'target_price': 0.53, 'amount': 0.0},
-                    'No0': {'target_price': 0.53, 'amount': 0.0},
-                    'No1': {'target_price': 0.53, 'amount': 0.0},
-                    'No2': {'target_price': 0.53, 'amount': 0.0},
-                    'No3': {'target_price': 0.53, 'amount': 0.0},
-                    'No4': {'target_price': 0.53, 'amount': 0.0},
-                    'No5': {'target_price': 0.53, 'amount': 0.0},
-                    'No6': {'target_price': 0.53, 'amount': 0.0},
-                    'No7': {'target_price': 0.53, 'amount': 0.0},
-                    'No8': {'target_price': 0.53, 'amount': 0.0},
-                    'No9': {'target_price': 0.53, 'amount': 0.0},
-                    'No10': {'target_price': 0.53, 'amount': 0.0},
-                    'No11': {'target_price': 0.53, 'amount': 0.0},
-                    'No12': {'target_price': 0.53, 'amount': 0.0},
-                    'No13': {'target_price': 0.53, 'amount': 0.0},
-                    'No14': {'target_price': 0.53, 'amount': 0.0}
+                    'Yes0': {'target_price': 0.52, 'amount': 0.0},
+                    'Yes1': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes2': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes3': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes4': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes5': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes6': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes7': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes8': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes9': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes10': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes11': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes12': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes13': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes14': {'target_price': 0.00, 'amount': 0.0},
+                    'No0': {'target_price': 0.52, 'amount': 0.0},
+                    'No1': {'target_price': 0.00, 'amount': 0.0},
+                    'No2': {'target_price': 0.00, 'amount': 0.0},
+                    'No3': {'target_price': 0.00, 'amount': 0.0},
+                    'No4': {'target_price': 0.00, 'amount': 0.0},
+                    'No5': {'target_price': 0.00, 'amount': 0.0},
+                    'No6': {'target_price': 0.00, 'amount': 0.0},
+                    'No7': {'target_price': 0.00, 'amount': 0.0},
+                    'No8': {'target_price': 0.00, 'amount': 0.0},
+                    'No9': {'target_price': 0.00, 'amount': 0.0},
+                    'No10': {'target_price': 0.00, 'amount': 0.0},
+                    'No11': {'target_price': 0.00, 'amount': 0.0},
+                    'No12': {'target_price': 0.00, 'amount': 0.0},
+                    'No13': {'target_price': 0.00, 'amount': 0.0},
+                    'No14': {'target_price': 0.00, 'amount': 0.0}
                 }
             }
 
@@ -3598,6 +3598,9 @@ class CryptoTrader:
             if not self.is_trading and self.driver:
                 self.logger.info("执行定时页面刷新...")
                 self.driver.refresh()
+                time.sleep(2)  # 等待页面加载
+                # 检查并处理登录状态
+                self.check_and_handle_login()
                 self.logger.info("页面刷新完成")
             else:
                 self.logger.info("正在交易中或浏览器未连接，跳过页面刷新")
@@ -3610,18 +3613,66 @@ class CryptoTrader:
 
     def sleep_refresh(self, operation_name="未指定操作"):
         """
-        执行等待3秒并刷新页面的操作，重复4次
+        执行等待4秒并刷新页面的操作，重复4次
         
         Args:
             operation_name (str): 操作名称,用于日志记录
         """
         try:
-            for i in range(3):  # 重复4次，如果要重复 5 次，修改数字即可
+            for i in range(4):  # 重复次数，修改数字即可
                 self.logger.info(f"{operation_name} - 等待3秒后刷新页面 ({i+1}/4)")
-                time.sleep(5)  # 等待3秒
+                time.sleep(5)  # 等待5秒
                 self.driver.refresh()  # 刷新页面       
         except Exception as e:
             self.logger.error(f"{operation_name} - sleep_refresh操作失败: {str(e)}")
+
+    def check_and_handle_login(self):
+        """检查登录状态并在需要时自动登录"""
+        try:
+            # 检查登录按钮
+            login_button = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//*[@id="__pm_viewport"]/nav[1]/div[1]/div[3]/div/nav/div/ul/div[1]/div/button'))
+            ) # 登录按钮XPATH
+            
+            # 如果按钮文字是"Log In"，需要登录
+            if login_button.text == "Log In":
+                self.logger.info("检测到未登录状态，开始自动登录...")
+                
+                # 点击登录按钮
+                login_button.click()
+                time.sleep(1)
+                
+                # 等待并点击MetaMask按钮
+                metamask_button = WebDriverWait(self.driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'MetaMask')]"))
+                )
+                metamask_button.click()
+                time.sleep(1)
+                
+                # 第一轮键盘操作
+                for _ in range(5):
+                    pyautogui.press('tab')
+                    time.sleep(0.1)
+                pyautogui.press('enter')
+                
+                # 等待2秒
+                time.sleep(3)
+                
+                # 第二轮键盘操作
+                for _ in range(7):
+                    pyautogui.press('tab')
+                    time.sleep(0.1)
+                pyautogui.press('enter')
+                
+                # 等待2秒后刷新页面
+                time.sleep(2)
+                self.driver.refresh()
+                
+                self.logger.info("自动登录完成")
+                return True       
+        except Exception as e:
+            self.logger.error(f"自动登录过程出错: {str(e)}")
+            return False
 
 if __name__ == "__main__":
     try:
