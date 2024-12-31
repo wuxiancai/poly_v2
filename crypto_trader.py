@@ -83,6 +83,7 @@ class CryptoTrader:
         self.retry_interval = 5
         # 添加交易次数计数器
         self.trade_count = 0
+        self.sell_count = 0  # 添加卖出计数器
         self.is_trading = False  # 添加交易状态标志
         self.refresh_interval = 300000  # 5分钟 = 300000毫秒
         self.refresh_timer = None  # 用于存储定时器ID
@@ -3360,7 +3361,7 @@ class CryptoTrader:
                     self.yes_price_entry.insert(0, "0.53")
                     self.no_price_entry.delete(0, tk.END)
                     self.no_price_entry.insert(0, "0.53")
-                    
+
                     """# 在所有操作完成后,优雅退出并重启
                     self.logger.info("准备重启程序...")
                     self.root.after(1000, self.restart_program)  # 1秒后重启"""
@@ -3417,7 +3418,7 @@ class CryptoTrader:
                         trade_type="Sell No Final",
                         price=no_price,
                         amount=0.0,  # 卖出时金额为总持仓
-                        trade_count=15
+                        trade_count=self.sell_count  # 使用卖出计数器
                     )
                     # 执行等待和刷新
                     self.sleep_refresh("Sell_no")
@@ -3454,12 +3455,16 @@ class CryptoTrader:
         time.sleep(0.5)
         self.sell_profit_button.invoke()
         time.sleep(1)
+        
+        # 增加卖出计数
+        self.sell_count += 1
+        
         # 发送交易邮件 - 卖出YES
         self.send_trade_email(
             trade_type="Sell Yes Final",
             price=0.0,
             amount=0.0,  # 卖出时金额为总持仓
-            trade_count=15
+            trade_count=self.sell_count  # 使用卖出计数器
         )
         # 执行等待和刷新
         self.sleep_refresh("only_sell_yes")
@@ -3470,14 +3475,16 @@ class CryptoTrader:
         time.sleep(0.5)
         self.sell_profit_button.invoke()
         time.sleep(1)
-        # 等待3秒
-        time.sleep(1)
+        
+        # 增加卖出计数
+        self.sell_count += 1
+        
         # 发送交易邮件 - 卖出NO
         self.send_trade_email(
             trade_type="Sell No Final",
             price=0.0,
             amount=0.0,  # 卖出时金额为总持仓
-            trade_count=15
+            trade_count=self.sell_count  # 使用卖出计数器
         )
         # 执行等待和刷新
         self.sleep_refresh("only_sell_no")
@@ -3499,9 +3506,12 @@ class CryptoTrader:
                 if not trading_pair or trading_pair == "--":
                     trading_pair = "未知交易币对"
                 
+                # 根据交易类型选择显示的计数
+                count_in_subject = self.sell_count if "Sell" in trade_type else trade_count
+                
                 msg = MIMEMultipart()
                 current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                subject = f'{hostname}第{trade_count}次{trade_type}的{trading_pair}'
+                subject = f'{hostname}第{count_in_subject}次{trade_type}的{trading_pair}'
                 msg['Subject'] = Header(subject, 'utf-8')
                 msg['From'] = sender
                 msg['To'] = receiver
@@ -3513,7 +3523,8 @@ class CryptoTrader:
                 交易价格: ${price:.2f}
                 交易金额: ${amount:.2f}
                 交易时间: {current_time}
-                当前总交易次数: {trade_count}
+                当前买入次数: {self.trade_count}
+                当前卖出次数: {self.sell_count}
                 """
                 msg.attach(MIMEText(content, 'plain', 'utf-8'))
                 
@@ -3558,7 +3569,6 @@ class CryptoTrader:
             self.root.quit()
             
             # 使用subprocess启动新进程,添加--restart参数
-            import subprocess
             subprocess.Popen(['python3', 'crypto_trader.py', '--restart'])
             
             # 退出当前程序
@@ -3606,9 +3616,9 @@ class CryptoTrader:
             operation_name (str): 操作名称,用于日志记录
         """
         try:
-            for i in range(4):  # 重复4次，如果要重复 5 次，修改数字即可
+            for i in range(3):  # 重复4次，如果要重复 5 次，修改数字即可
                 self.logger.info(f"{operation_name} - 等待3秒后刷新页面 ({i+1}/4)")
-                time.sleep(3)  # 等待3秒
+                time.sleep(5)  # 等待3秒
                 self.driver.refresh()  # 刷新页面       
         except Exception as e:
             self.logger.error(f"{operation_name} - sleep_refresh操作失败: {str(e)}")
