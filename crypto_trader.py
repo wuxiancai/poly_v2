@@ -3360,9 +3360,10 @@ class CryptoTrader:
                     self.yes_price_entry.insert(0, "0.53")
                     self.no_price_entry.delete(0, tk.END)
                     self.no_price_entry.insert(0, "0.53")
-                    # 在所有操作完成后,优雅退出并重启
+                    
+                    """# 在所有操作完成后,优雅退出并重启
                     self.logger.info("准备重启程序...")
-                    self.root.after(1000, self.restart_program)  # 1秒后重启              
+                    self.root.after(1000, self.restart_program)  # 1秒后重启"""
         except Exception as e:
             self.logger.error(f"Sell_yes执行失败: {str(e)}")
             self.update_status(f"Sell_yes执行失败: {str(e)}")
@@ -3438,9 +3439,9 @@ class CryptoTrader:
                     self.no_price_entry.delete(0, tk.END)
                     self.no_price_entry.insert(0, "0.53")
                     
-                    # 在所有操作完成后,优雅退出并重启
+                    """# 在所有操作完成后,优雅退出并重启
                     self.logger.info("准备重启程序...")
-                    self.root.after(1000, self.restart_program)  # 1秒后重启    
+                    self.root.after(1000, self.restart_program)  # 1秒后重启"""
         except Exception as e:
             self.logger.error(f"Sell_no执行失败: {str(e)}")
             self.update_status(f"Sell_no执行失败: {str(e)}")
