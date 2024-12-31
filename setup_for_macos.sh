@@ -28,10 +28,10 @@ export HOMEBREW_NO_AUTO_UPDATE=1
 export NONINTERACTIVE=1
 export CI=1
 # 在 HOSTS 文件中添加 github.com 和 raw.githubusercontent.com 的记录
-echo "185.199.108.153 raw.githubusercontent.com" | sudo tee -a /etc/hosts
-echo "185.199.109.153 raw.githubusercontent.com" | sudo tee -a /etc/hosts
-echo "185.199.110.153 raw.githubusercontent.com" | sudo tee -a /etc/hosts
-echo "185.199.111.153 raw.githubusercontent.com" | sudo tee -a /etc/hosts
+#echo "185.199.108.153 raw.githubusercontent.com" | sudo tee -a /etc/hosts
+#echo "185.199.109.153 raw.githubusercontent.com" | sudo tee -a /etc/hosts
+#echo "185.199.110.153 raw.githubusercontent.com" | sudo tee -a /etc/hosts
+#echo "185.199.111.153 raw.githubusercontent.com" | sudo tee -a /etc/hosts
 
 # 检查并安装 Homebrew (自动模式)
 if ! command -v brew &> /dev/null; then
@@ -82,19 +82,9 @@ echo "安装 Chrome 和 ChromeDriver..."
 brew install --cask google-chrome --force
 brew install chromedriver --force
 
-# 创建启动脚本
-echo "创建启动脚本 (启动新的Chrome实例)..."
-cat > start_chrome.sh << 'EOL'
-#!/bin/bash
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --remote-debugging-port=9222 --user-data-dir="$HOME/ChromeDebug" https://polymarket.com/markets/crypto
-EOL
-
-
 chmod +x start_chrome.sh
-
 # 创建自动启动脚本
 cat > run_trader.sh << 'EOL'
-
 # 激活虚拟环境
 source venv/bin/activate
 
@@ -103,6 +93,7 @@ python3 crypto_trader.py
 EOL
 
 chmod +x run_trader.sh
+chmod +x crypto_trader.py
 
 # 验证安装
 echo "=== 验证安装 ==="
@@ -136,7 +127,7 @@ if __name__ == "__main__":
 EOL
 
 # 运行测试
-echo "\n运行环境测试..."
+echo "运行环境测试..."
 python3 test_environment.py
 
 echo "${GREEN}安装完成！${NC}"
@@ -148,4 +139,4 @@ echo "3. 所有配置已自动完成，无需手动操作"
 # 自动清理安装缓存
 brew cleanup -s
 pip3 cache purge
-
+rm -rf test_environment.py
