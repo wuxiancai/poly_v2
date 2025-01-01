@@ -85,7 +85,7 @@ class CryptoTrader:
         self.trade_count = 0
         self.sell_count = 0  # 添加卖出计数器
         self.is_trading = False  # 添加交易状态标志
-        self.refresh_interval = 300000  # 5分钟 = 300000毫秒
+        self.refresh_interval = 60000  # 5分钟 = 300000毫秒
         self.refresh_timer = None  # 用于存储定时器ID
         
         try:
@@ -111,6 +111,15 @@ class CryptoTrader:
         # 如果是重启,延迟2秒后自动点击开始监控
         if self.is_restart:
             self.root.after(2000, self.auto_start_monitor)
+        
+        # 添加当前监控网址的属性
+        self.current_url = ''
+        
+        # 添加URL监控定时器
+        self.url_check_timer = None
+        
+        # 添加登录状态监控定时器
+        self.login_check_timer = None
 
     def load_config(self):
         try:
@@ -833,39 +842,98 @@ class CryptoTrader:
 
     def start_monitoring(self):
         """开始监控"""
-        # 先进行基本检查
-        new_url = self.url_entry.get().strip()
-        if not new_url:
-            messagebox.showwarning("警告", "请输入网址")
-            return  
-        # 检查URL格式
-        if not new_url.startswith(('http://', 'https://')):
-            new_url = 'https://' + new_url
-            self.url_entry.delete(0, tk.END)
-            self.url_entry.insert(0, new_url)
-        # 启用开始按钮，启用停止按钮
-        self.start_button['state'] = 'disabled'
-        self.stop_button['state'] = 'normal'
-        
-        # 将"开始监控"文字变为红色
-        self.start_button.configure(style='Red.TButton')
-        # 恢复"停止监控"文字为黑色
-        self.stop_button.configure(style='Black.TButton')
-        
-        # 启用更金额按钮
-        self.update_amount_button['state'] = 'normal'
-        
-        # 5秒后自动点击更新金额按钮
-        self.root.after(5000, self.update_amount_button.invoke)
+        try:
+            # 保存正确的监控网址
+            self.current_url = self.url_entry.get()
+            self.logger.info(f"设置监控网址: {self.current_url}")
+            
+            # 先进行基本检查
+            new_url = self.url_entry.get().strip()
+            if not new_url:
+                messagebox.showwarning("警告", "请输入网址")
+                return  
+            # 检查URL格式
+            if not new_url.startswith(('http://', 'https://')):
+                new_url = 'https://' + new_url
+                self.url_entry.delete(0, tk.END)
+                self.url_entry.insert(0, new_url)
+            # 启用开始按钮，启用停止按钮
+            self.start_button['state'] = 'disabled'
+            self.stop_button['state'] = 'normal'
+            
+            # 将"开始监控"文字变为红色
+            self.start_button.configure(style='Red.TButton')
+            # 恢复"停止监控"文字为黑色
+            self.stop_button.configure(style='Black.TButton')
+            
+            # 启用更金额按钮
+            self.update_amount_button['state'] = 'normal'
+            
+            # 5秒后自动点击更新金额按钮
+            self.root.after(5000, self.update_amount_button.invoke)
 
-        # 重置交易次数计数器
-        self.trade_count = 0
-        
-        # 启动浏览器作线程
-        threading.Thread(target=self._start_browser_monitoring, args=(new_url,), daemon=True).start()
+            # 重置交易次数计数器
+            self.trade_count = 0
+            
+            # 启动浏览器作线程
+            threading.Thread(target=self._start_browser_monitoring, args=(new_url,), daemon=True).start()
 
-        # 启动页面刷新定时器
-        self.schedule_refresh()
+            # 启动页面刷新定时器
+            self.schedule_refresh()
+            
+            # 启动URL监控
+            self.start_url_monitoring()
+            
+            # 启动登录状态监控
+            self.start_login_monitoring()
+            
+        except Exception as e:
+            self.logger.error(f"启动监控失败: {str(e)}")
+            messagebox.showerror("错误", f"启动监控失败: {str(e)}")
+
+    def start_url_monitoring(self):
+        """启动URL监控"""
+        def check_url():
+            if self.running and self.driver:
+                try:
+                    current_page_url = self.driver.current_url
+                    if current_page_url != self.current_url:
+                        self.logger.warning(f"检测到URL变化，正在恢复...")
+                        self.driver.get(self.current_url)
+                        self.logger.info("已恢复到正确的监控网址")
+                except Exception as e:
+                    self.logger.error(f"URL监控出错: {str(e)}")
+                
+                # 继续监控
+                if self.running:
+                    self.url_check_timer = self.root.after(1000, check_url)  # 每秒检查一次
+        
+        # 开始第一次检查
+        self.url_check_timer = self.root.after(1000, check_url)
+
+    def start_login_monitoring(self):
+        """启动登录状态监控"""
+        def check_login_status():
+            if self.running and self.driver:
+                try:
+                    # 检查登录按钮
+                    login_button = self.driver.find_element(By.XPATH, 
+                        '//*[@id="__pm_viewport"]/nav[1]/div[1]/div[3]/div/nav/div/ul/div[1]/div/button')
+                    
+                    if login_button.text == "Log In":
+                        self.logger.warning("检测到未登录状态，正在执行登录...")
+                        self.check_and_handle_login()
+                    else:
+                        self.logger.debug("当前为登录状态")
+                except Exception as e:
+                    self.logger.error(f"登录状态检查出错: {str(e)}")
+                
+                # 继续监控
+                if self.running:
+                    self.login_check_timer = self.root.after(5000, check_login_status)  # 每5秒检查一次
+        
+        # 开始第一次检查
+        self.login_check_timer = self.root.after(1000, check_login_status)
 
     def _start_browser_monitoring(self, new_url):
         """在新线程中执行浏览器操作"""
@@ -944,26 +1012,41 @@ class CryptoTrader:
 
     def stop_monitoring(self):
         """停止监控"""
-        self.running = False
-        self.start_button['state'] = 'normal'
-        self.stop_button['state'] = 'disabled'
-        self.update_amount_button['state'] = 'disabled'  # 禁用更新金额按钮
-        
-        # 将"停止监控"文字变为红色
-        self.stop_button.configure(style='Red.TButton')
-        # 恢复"开始监控"文字为蓝色
-        self.start_button.configure(style='Black.TButton')
-        if self.driver:
-            self.driver.quit()
-            self.driver = None
-        # 记录最终交易次数
-        final_trade_count = self.trade_count
-        self.logger.info(f"本次监控共执行 {final_trade_count} 次交易")
+        try:
+            self.running = False
+            
+            # 停止URL监控
+            if self.url_check_timer:
+                self.root.after_cancel(self.url_check_timer)
+                self.url_check_timer = None
+            
+            # 停止登录状态监控
+            if self.login_check_timer:
+                self.root.after_cancel(self.login_check_timer)
+                self.login_check_timer = None
+            
+            self.start_button['state'] = 'normal'
+            self.stop_button['state'] = 'disabled'
+            self.update_amount_button['state'] = 'disabled'  # 禁用更新金额按钮
+            
+            # 将"停止监控"文字变为红色
+            self.stop_button.configure(style='Red.TButton')
+            # 恢复"开始监控"文字为蓝色
+            self.start_button.configure(style='Black.TButton')
+            if self.driver:
+                self.driver.quit()
+                self.driver = None
+            # 记录最终交易次数
+            final_trade_count = self.trade_count
+            self.logger.info(f"本次监控共执行 {final_trade_count} 次交易")
 
-        # 取消页面刷新定时器
-        if self.refresh_timer:
-            self.root.after_cancel(self.refresh_timer)
-            self.refresh_timer = None
+            # 取消页面刷新定时器
+            if self.refresh_timer:
+                self.root.after_cancel(self.refresh_timer)
+                self.refresh_timer = None
+
+        except Exception as e:
+            self.logger.error(f"停止监控失败: {str(e)}")
 
     def save_config(self):
         # 从GUI获取并保存配置
@@ -3587,29 +3670,43 @@ class CryptoTrader:
             self.update_status(f"自动开始监控失败: {str(e)}")
 
     def schedule_refresh(self):
-        """实现每 5 分钟页面刷新一次"""
-        if self.refresh_timer:
-            self.root.after_cancel(self.refresh_timer)
-        self.refresh_timer = self.root.after(self.refresh_interval, self.refresh_page)
-
-    def refresh_page(self):
-        """实现每 5 分钟刷新页面一次"""
-        try:
-            if not self.is_trading and self.driver:
+        """安排定时刷新"""
+        if self.running:
+            try:
                 self.logger.info("执行定时页面刷新...")
-                self.driver.refresh()
-                time.sleep(2)  # 等待页面加载
-                # 检查并处理登录状态
-                self.check_and_handle_login()
-                self.logger.info("页面刷新完成")
-            else:
-                self.logger.info("正在交易中或浏览器未连接，跳过页面刷新")
-        except Exception as e:
-            self.logger.error(f"页面刷新失败: {str(e)}")
-        finally:
-            # 安排下一次刷新
-            if self.running:
-                self.schedule_refresh()
+                if self.driver:
+                    # 保存当前URL
+                    current_url = self.driver.current_url
+                    
+                    # 刷新页面
+                    self.driver.refresh()
+                    
+                    # 等待页面加载完成
+                    WebDriverWait(self.driver, 30).until(
+                        lambda driver: driver.execute_script('return document.readyState') == 'complete'
+                    )
+                    
+                    # 检查URL是否正确
+                    if self.driver.current_url != current_url:
+                        self.logger.warning("刷新后URL发生变化，正在恢复...")
+                        self.driver.get(current_url)
+                        
+                        # 等待页面加载完成
+                        WebDriverWait(self.driver, 30).until(
+                            lambda driver: driver.execute_script('return document.readyState') == 'complete'
+                        )
+                    
+                    self.logger.info("页面刷新完成")
+                
+                # 安排下一次刷新
+                if self.running:
+                    self.refresh_timer = self.root.after(self.refresh_interval, self.schedule_refresh)
+                    
+            except Exception as e:
+                self.logger.error(f"页面刷新失败: {str(e)}")
+                # 如果刷新失败，仍然安排下一次刷新
+                if self.running:
+                    self.refresh_timer = self.root.after(self.refresh_interval, self.schedule_refresh)
 
     def sleep_refresh(self, operation_name="未指定操作"):
         """
@@ -3619,7 +3716,7 @@ class CryptoTrader:
             operation_name (str): 操作名称,用于日志记录
         """
         try:
-            for i in range(4):  # 重复次数，修改数字即可
+            for i in range(3):  # 重复次数，修改数字即可
                 self.logger.info(f"{operation_name} - 等待3秒后刷新页面 ({i+1}/4)")
                 time.sleep(5)  # 等待5秒
                 self.driver.refresh()  # 刷新页面       
@@ -3627,51 +3724,55 @@ class CryptoTrader:
             self.logger.error(f"{operation_name} - sleep_refresh操作失败: {str(e)}")
 
     def check_and_handle_login(self):
-        """检查登录状态并在需要时自动登录"""
+        """执行登录操作"""
         try:
-            # 检查登录按钮
-            login_button = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, '//*[@id="__pm_viewport"]/nav[1]/div[1]/div[3]/div/nav/div/ul/div[1]/div/button'))
-            ) # 登录按钮XPATH
+            self.logger.info("开始执行登录操作...")
             
-            # 如果按钮文字是"Log In"，需要登录
-            if login_button.text == "Log In":
-                self.logger.info("检测到未登录状态，开始自动登录...")
-                
-                # 点击登录按钮
-                login_button.click()
-                time.sleep(1)
-                
-                # 等待并点击MetaMask按钮
-                metamask_button = WebDriverWait(self.driver, 10).until(
-                    EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'MetaMask')]"))
-                )
-                metamask_button.click()
-                time.sleep(1)
-                
-                # 第一轮键盘操作
-                for _ in range(5):
-                    pyautogui.press('tab')
-                    time.sleep(0.1)
-                pyautogui.press('enter')
-                
-                # 等待2秒
-                time.sleep(3)
-                
-                # 第二轮键盘操作
-                for _ in range(7):
-                    pyautogui.press('tab')
-                    time.sleep(0.1)
-                pyautogui.press('enter')
-                
-                # 等待2秒后刷新页面
-                time.sleep(2)
-                self.driver.refresh()
-                
-                self.logger.info("自动登录完成")
-                return True       
+            # 点击登录按钮
+            login_button = self.driver.find_element(By.XPATH, 
+                '//*[@id="__pm_viewport"]/nav[1]/div[1]/div[3]/div/nav/div/ul/div[1]/div/button')
+            login_button.click()
+            time.sleep(1)
+            
+            # 使用 JavaScript 查找并点击 MetaMask 按钮
+            self.driver.execute_script("""
+                const buttons = document.querySelectorAll('button');
+                for (const button of buttons) {
+                    if (button.textContent.includes('MetaMask')) {
+                        button.click();
+                        break;
+                    }
+                }
+            """)
+            time.sleep(3)
+            
+            # 处理 MetaMask 弹窗
+            # 模拟键盘操作序列
+            # 1. 按5次TAB
+            for _ in range(5):
+                pyautogui.press('tab')
+                time.sleep(0.1)  # 每次按键之间添加短暂延迟
+            
+            # 2. 按1次ENTER
+            pyautogui.press('enter')
+            time.sleep(2)  # 等待2秒
+            
+            # 3. 按7次TAB
+            for _ in range(7):
+                pyautogui.press('tab')
+                time.sleep(0.1)
+            
+            # 4. 按1次ENTER
+            pyautogui.press('enter')
+            
+            # 等待弹窗自动关闭
+            time.sleep(0.3)
+            
+            self.logger.info("登录操作完成")
+            return True
+            
         except Exception as e:
-            self.logger.error(f"自动登录过程出错: {str(e)}")
+            self.logger.error(f"登录操作失败: {str(e)}")
             return False
 
 if __name__ == "__main__":
