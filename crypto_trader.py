@@ -7,7 +7,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 import json
 import threading
@@ -85,7 +85,7 @@ class CryptoTrader:
         self.trade_count = 0
         self.sell_count = 0  # 添加卖出计数器
         self.is_trading = False  # 添加交易状态标志
-        self.refresh_interval = 60000  # 5分钟 = 300000毫秒
+        self.refresh_interval = 300000  # 5分钟 = 300000毫秒
         self.refresh_timer = None  # 用于存储定时器ID
         
         try:
@@ -122,14 +122,13 @@ class CryptoTrader:
         self.login_check_timer = None
 
     def load_config(self):
+        """加载配置文件，保持默认格式"""
         try:
-            # 确认配置
+            # 默认配置
             default_config = {
-                'website': {
-                    'url': ''
-                },
+                'website': {'url': ''},
                 'trading': {
-                    'Yes0': {'target_price': 0.52, 'amount': 0.0},
+                    'Yes0': {'target_price': 0.53, 'amount': 0.0},
                     'Yes1': {'target_price': 0.00, 'amount': 0.0},
                     'Yes2': {'target_price': 0.00, 'amount': 0.0},
                     'Yes3': {'target_price': 0.00, 'amount': 0.0},
@@ -144,7 +143,23 @@ class CryptoTrader:
                     'Yes12': {'target_price': 0.00, 'amount': 0.0},
                     'Yes13': {'target_price': 0.00, 'amount': 0.0},
                     'Yes14': {'target_price': 0.00, 'amount': 0.0},
-                    'No0': {'target_price': 0.52, 'amount': 0.0},
+                    'Yes15': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes16': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes17': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes18': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes19': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes20': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes21': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes22': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes23': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes24': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes25': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes26': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes27': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes28': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes29': {'target_price': 0.00, 'amount': 0.0},
+                    'Yes30': {'target_price': 0.00, 'amount': 0.0},
+                    'No0': {'target_price': 0.53, 'amount': 0.0},
                     'No1': {'target_price': 0.00, 'amount': 0.0},
                     'No2': {'target_price': 0.00, 'amount': 0.0},
                     'No3': {'target_price': 0.00, 'amount': 0.0},
@@ -158,17 +173,34 @@ class CryptoTrader:
                     'No11': {'target_price': 0.00, 'amount': 0.0},
                     'No12': {'target_price': 0.00, 'amount': 0.0},
                     'No13': {'target_price': 0.00, 'amount': 0.0},
-                    'No14': {'target_price': 0.00, 'amount': 0.0}
-                }
+                    'No14': {'target_price': 0.00, 'amount': 0.0},
+                    'No15': {'target_price': 0.00, 'amount': 0.0},
+                    'No16': {'target_price': 0.00, 'amount': 0.0},
+                    'No17': {'target_price': 0.00, 'amount': 0.0},
+                    'No18': {'target_price': 0.00, 'amount': 0.0},
+                    'No19': {'target_price': 0.00, 'amount': 0.0},
+                    'No20': {'target_price': 0.00, 'amount': 0.0},
+                    'No21': {'target_price': 0.00, 'amount': 0.0},
+                    'No22': {'target_price': 0.00, 'amount': 0.0},
+                    'No23': {'target_price': 0.00, 'amount': 0.0},
+                    'No24': {'target_price': 0.00, 'amount': 0.0},
+                    'No25': {'target_price': 0.00, 'amount': 0.0},
+                    'No26': {'target_price': 0.00, 'amount': 0.0},
+                    'No27': {'target_price': 0.00, 'amount': 0.0},
+                    'No28': {'target_price': 0.00, 'amount': 0.0},
+                    'No29': {'target_price': 0.00, 'amount': 0.0},
+                    'No30': {'target_price': 0.00, 'amount': 0.0}
+                },
+                'url_history': []
             }
-
+            
             try:
                 # 尝试读取现有配置
                 with open('config.json', 'r', encoding='utf-8') as f:
                     saved_config = json.load(f)
                     self.logger.info("成功加载配置文件")
                     
-                    # 合并保存的配置和默认配置
+                    # 合并配置
                     for key in default_config:
                         if key not in saved_config:
                             saved_config[key] = default_config[key]
@@ -176,24 +208,60 @@ class CryptoTrader:
                             for sub_key in default_config[key]:
                                 if sub_key not in saved_config[key]:
                                     saved_config[key][sub_key] = default_config[key][sub_key]
-                    return saved_config       
+                    return saved_config
             except FileNotFoundError:
                 self.logger.warning("配置文件不存在，创建默认配置")
                 with open('config.json', 'w', encoding='utf-8') as f:
-                    json.dump(default_config, f, indent=4)
+                    json.dump(default_config, f, indent=4, ensure_ascii=False)
                 return default_config
             except json.JSONDecodeError:
                 self.logger.error("配置文件格式错误，使用默认配置")
                 with open('config.json', 'w', encoding='utf-8') as f:
-                    json.dump(default_config, f, indent=4)
+                    json.dump(default_config, f, indent=4, ensure_ascii=False)
                 return default_config
         except Exception as e:
             self.logger.error(f"加载配置文件失败: {str(e)}")
             raise
 
+    def save_config(self):
+        """保存配置到文件，保持JSON格式化"""
+        try:
+            # 从GUI获取并保存配置
+            for position, frame in [('Yes', self.yes_frame), ('No', self.no_frame)]:
+                entries = [w for w in frame.winfo_children() if isinstance(w, ttk.Entry)]
+                
+                # 处理目标价格
+                target_price = entries[0].get().strip() or '0.0'
+                self.config['trading'][position]['target_price'] = float(target_price)
+                
+                # 处理交易数量
+                amount = entries[1].get().strip() or '0.0'
+                self.config['trading'][position]['amount'] = float(amount)
+            
+            # 处理网站地址历史记录
+            current_url = self.url_entry.get().strip()
+            if current_url:
+                if 'url_history' not in self.config:
+                    self.config['url_history'] = []
+                
+                # 更新URL历史记录
+                if current_url in self.config['url_history']:
+                    self.config['url_history'].remove(current_url)
+                self.config['url_history'].insert(0, current_url)
+                self.config['url_history'] = self.config['url_history'][:6]  # 保留最近6条
+                self.url_entry['values'] = self.config['url_history']
+            
+            # 保存配置到文件，使用indent=4确保格式化
+            with open('config.json', 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, indent=4, ensure_ascii=False)
+                
+        except Exception as e:
+            self.logger.error(f"保存配置失败: {str(e)}")
+            raise
+
     def setup_gui(self):
         self.root = tk.Tk()
-        self.root.title("Polymarket自动交易")
+        self.root.title("Polymarket 30 次自动交易")
         # 创建主滚动框架
         main_canvas = tk.Canvas(self.root)
         scrollbar = ttk.Scrollbar(self.root, orient="vertical", command=main_canvas.yview)
@@ -254,13 +322,13 @@ class CryptoTrader:
         # 初始金额设置
         ttk.Label(settings_container, text="初始金额(%):").grid(row=0, column=0, padx=5, pady=5)
         self.initial_amount_entry = ttk.Entry(settings_container, width=10)
-        self.initial_amount_entry.insert(0, "8")
+        self.initial_amount_entry.insert(0, "6")
         self.initial_amount_entry.grid(row=0, column=1, padx=5, pady=5)
         
         # 反水一次设置
         ttk.Label(settings_container, text="反水一次(%):").grid(row=0, column=2, padx=5, pady=5)
         self.first_rebound_entry = ttk.Entry(settings_container, width=10)
-        self.first_rebound_entry.insert(0, "150")
+        self.first_rebound_entry.insert(0, "160")
         self.first_rebound_entry.grid(row=0, column=3, padx=5, pady=5)
         
         # 反水N次设置
@@ -274,7 +342,7 @@ class CryptoTrader:
             settings_container.grid_columnconfigure(i, weight=1)
         # 设置窗口大小和位置
         window_width = 800
-        window_height = 600
+        window_height = 1200
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         x = (screen_width - window_width) // 2
@@ -314,6 +382,7 @@ class CryptoTrader:
                                           command=self.start_monitoring, width=10,
                                           style='Black.TButton')  # 默认使用黑色文字
         self.start_button.pack(side=tk.LEFT, padx=5)
+        
         
         self.stop_button = ttk.Button(button_frame, text="停止监控", 
                                      command=self.stop_monitoring, width=10,
@@ -437,6 +506,38 @@ class CryptoTrader:
         self.yes13_price_entry.insert(0, "0.00")
         self.yes14_price_entry = ttk.Entry(self.yes_frame)
         self.yes14_price_entry.insert(0, "0.00")
+        self.yes15_price_entry = ttk.Entry(self.yes_frame)
+        self.yes15_price_entry.insert(0, "0.00")
+        self.yes16_price_entry = ttk.Entry(self.yes_frame)
+        self.yes16_price_entry.insert(0, "0.00")
+        self.yes17_price_entry = ttk.Entry(self.yes_frame)
+        self.yes17_price_entry.insert(0, "0.00")
+        self.yes18_price_entry = ttk.Entry(self.yes_frame)
+        self.yes18_price_entry.insert(0, "0.00")
+        self.yes19_price_entry = ttk.Entry(self.yes_frame)
+        self.yes19_price_entry.insert(0, "0.00")
+        self.yes20_price_entry = ttk.Entry(self.yes_frame)
+        self.yes20_price_entry.insert(0, "0.00")
+        self.yes21_price_entry = ttk.Entry(self.yes_frame)
+        self.yes21_price_entry.insert(0, "0.00")
+        self.yes22_price_entry = ttk.Entry(self.yes_frame)
+        self.yes22_price_entry.insert(0, "0.00")
+        self.yes23_price_entry = ttk.Entry(self.yes_frame)
+        self.yes23_price_entry.insert(0, "0.00")
+        self.yes24_price_entry = ttk.Entry(self.yes_frame)
+        self.yes24_price_entry.insert(0, "0.00")
+        self.yes25_price_entry = ttk.Entry(self.yes_frame)
+        self.yes25_price_entry.insert(0, "0.00")
+        self.yes26_price_entry = ttk.Entry(self.yes_frame)
+        self.yes26_price_entry.insert(0, "0.00")
+        self.yes27_price_entry = ttk.Entry(self.yes_frame)
+        self.yes27_price_entry.insert(0, "0.00")
+        self.yes28_price_entry = ttk.Entry(self.yes_frame)
+        self.yes28_price_entry.insert(0, "0.00")
+        self.yes29_price_entry = ttk.Entry(self.yes_frame)
+        self.yes29_price_entry.insert(0, "0.00")
+        self.yes30_price_entry = ttk.Entry(self.yes_frame)
+        self.yes30_price_entry.insert(0, "0.00")
         # 设置它们的grid布局
         self.yes1_price_entry.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
         self.yes2_price_entry.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
@@ -452,6 +553,22 @@ class CryptoTrader:
         self.yes12_price_entry.grid(row=24, column=1, padx=5, pady=5, sticky="ew")
         self.yes13_price_entry.grid(row=26, column=1, padx=5, pady=5, sticky="ew")
         self.yes14_price_entry.grid(row=28, column=1, padx=5, pady=5, sticky="ew")
+        self.yes15_price_entry.grid(row=30, column=1, padx=5, pady=5, sticky="ew")
+        self.yes16_price_entry.grid(row=32, column=1, padx=5, pady=5, sticky="ew")
+        self.yes17_price_entry.grid(row=34, column=1, padx=5, pady=5, sticky="ew")
+        self.yes18_price_entry.grid(row=36, column=1, padx=5, pady=5, sticky="ew")
+        self.yes19_price_entry.grid(row=38, column=1, padx=5, pady=5, sticky="ew")
+        self.yes20_price_entry.grid(row=40, column=1, padx=5, pady=5, sticky="ew")
+        self.yes21_price_entry.grid(row=42, column=1, padx=5, pady=5, sticky="ew")
+        self.yes22_price_entry.grid(row=44, column=1, padx=5, pady=5, sticky="ew")
+        self.yes23_price_entry.grid(row=46, column=1, padx=5, pady=5, sticky="ew")
+        self.yes24_price_entry.grid(row=48, column=1, padx=5, pady=5, sticky="ew")
+        self.yes25_price_entry.grid(row=50, column=1, padx=5, pady=5, sticky="ew")
+        self.yes26_price_entry.grid(row=52, column=1, padx=5, pady=5, sticky="ew")
+        self.yes27_price_entry.grid(row=54, column=1, padx=5, pady=5, sticky="ew")
+        self.yes28_price_entry.grid(row=56, column=1, padx=5, pady=5, sticky="ew")
+        self.yes29_price_entry.grid(row=58, column=1, padx=5, pady=5, sticky="ew")
+        self.yes30_price_entry.grid(row=60, column=1, padx=5, pady=5, sticky="ew")
         
         # 修改Yes1-5的默认价格值
         for i in range(5):  # 改为range(5)以包含Yes 5
@@ -464,10 +581,8 @@ class CryptoTrader:
             amount_entry = ttk.Entry(self.yes_frame)
             amount_entry.insert(0, "0.0")
             amount_entry.grid(row=i*2+3, column=1, padx=5, pady=5, sticky="ew")
-        # 在 setup_gui 函数中,修改 Yes 6-14 和 No 6-14 的价格和金额设置
-
-        # Yes 6-14 配置
-        for i in range(6, 15):  # 6-14
+        # Yes 6-30 配置
+        for i in range(6, 31):  # 6-30
             ttk.Label(self.yes_frame, text=f"Yes {i} 价格($):", font=('Arial', 12)).grid(row=i*2, column=0, padx=5, pady=5)
             ttk.Label(self.yes_frame, text=f"Yes {i} 金额:", font=('Arial', 12)).grid(row=i*2+1, column=0, padx=5, pady=5)
             
@@ -481,7 +596,6 @@ class CryptoTrader:
             amount_entry.insert(0, "0.0")  # 设置默认金额
             amount_entry.grid(row=i*2+1, column=1, padx=5, pady=5, sticky="ew")
 
-        
         # No 配置区域
         self.no_frame = ttk.LabelFrame(config_frame, text="No配置", padding=(10, 5))
         self.no_frame.grid(row=0, column=1, padx=5, sticky="ew")
@@ -526,7 +640,38 @@ class CryptoTrader:
         self.no13_price_entry.insert(0, "0.00")
         self.no14_price_entry = ttk.Entry(self.no_frame)
         self.no14_price_entry.insert(0, "0.00")
-    
+        self.no15_price_entry = ttk.Entry(self.no_frame)
+        self.no15_price_entry.insert(0, "0.00")
+        self.no16_price_entry = ttk.Entry(self.no_frame)
+        self.no16_price_entry.insert(0, "0.00")
+        self.no17_price_entry = ttk.Entry(self.no_frame)
+        self.no17_price_entry.insert(0, "0.00")
+        self.no18_price_entry = ttk.Entry(self.no_frame)
+        self.no18_price_entry.insert(0, "0.00")
+        self.no19_price_entry = ttk.Entry(self.no_frame)
+        self.no19_price_entry.insert(0, "0.00")
+        self.no20_price_entry = ttk.Entry(self.no_frame)
+        self.no20_price_entry.insert(0, "0.00")
+        self.no21_price_entry = ttk.Entry(self.no_frame)
+        self.no21_price_entry.insert(0, "0.00")
+        self.no22_price_entry = ttk.Entry(self.no_frame)
+        self.no22_price_entry.insert(0, "0.00")
+        self.no23_price_entry = ttk.Entry(self.no_frame)
+        self.no23_price_entry.insert(0, "0.00")
+        self.no24_price_entry = ttk.Entry(self.no_frame)
+        self.no24_price_entry.insert(0, "0.00")
+        self.no25_price_entry = ttk.Entry(self.no_frame)
+        self.no25_price_entry.insert(0, "0.00")
+        self.no26_price_entry = ttk.Entry(self.no_frame)
+        self.no26_price_entry.insert(0, "0.00")
+        self.no27_price_entry = ttk.Entry(self.no_frame)
+        self.no27_price_entry.insert(0, "0.00")
+        self.no28_price_entry = ttk.Entry(self.no_frame)
+        self.no28_price_entry.insert(0, "0.00")
+        self.no29_price_entry = ttk.Entry(self.no_frame)
+        self.no29_price_entry.insert(0, "0.00")
+        self.no30_price_entry = ttk.Entry(self.no_frame)
+        self.no30_price_entry.insert(0, "0.00")
         # 设置它们的grid布局
         self.no1_price_entry.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
         self.no2_price_entry.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
@@ -542,6 +687,22 @@ class CryptoTrader:
         self.no12_price_entry.grid(row=24, column=1, padx=5, pady=5, sticky="ew")
         self.no13_price_entry.grid(row=26, column=1, padx=5, pady=5, sticky="ew")
         self.no14_price_entry.grid(row=28, column=1, padx=5, pady=5, sticky="ew")
+        self.no15_price_entry.grid(row=30, column=1, padx=5, pady=5, sticky="ew")
+        self.no16_price_entry.grid(row=32, column=1, padx=5, pady=5, sticky="ew")
+        self.no17_price_entry.grid(row=34, column=1, padx=5, pady=5, sticky="ew")
+        self.no18_price_entry.grid(row=36, column=1, padx=5, pady=5, sticky="ew")
+        self.no19_price_entry.grid(row=38, column=1, padx=5, pady=5, sticky="ew")
+        self.no20_price_entry.grid(row=40, column=1, padx=5, pady=5, sticky="ew")
+        self.no21_price_entry.grid(row=42, column=1, padx=5, pady=5, sticky="ew")
+        self.no22_price_entry.grid(row=44, column=1, padx=5, pady=5, sticky="ew")
+        self.no23_price_entry.grid(row=46, column=1, padx=5, pady=5, sticky="ew")
+        self.no24_price_entry.grid(row=48, column=1, padx=5, pady=5, sticky="ew")
+        self.no25_price_entry.grid(row=50, column=1, padx=5, pady=5, sticky="ew")
+        self.no26_price_entry.grid(row=52, column=1, padx=5, pady=5, sticky="ew")
+        self.no27_price_entry.grid(row=54, column=1, padx=5, pady=5, sticky="ew")
+        self.no28_price_entry.grid(row=56, column=1, padx=5, pady=5, sticky="ew")
+        self.no29_price_entry.grid(row=58, column=1, padx=5, pady=5, sticky="ew")
+        self.no30_price_entry.grid(row=60, column=1, padx=5, pady=5, sticky="ew")
         
         for i in range(5):
             ttk.Label(self.no_frame, text=f"No {i+1} 价格($):", font=('Arial', 12)).grid(row=i*2+2, column=0, padx=5, pady=5)
@@ -554,8 +715,8 @@ class CryptoTrader:
             amount_entry = ttk.Entry(self.no_frame)
             amount_entry.insert(0, "0.0")
             amount_entry.grid(row=i*2+3, column=1, padx=5, pady=5, sticky="ew")
-        # No 6-14 配置
-        for i in range(6, 15):  # 6-14
+        # No 6-30配置
+        for i in range(6, 31):  # 6-30
             ttk.Label(self.no_frame, text=f"No {i} 价格($):", font=('Arial', 12)).grid(row=i*2, column=0, padx=5, pady=5)
             ttk.Label(self.no_frame, text=f"No {i} 金额:", font=('Arial', 12)).grid(row=i*2+1, column=0, padx=5, pady=5)
             
@@ -657,66 +818,194 @@ class CryptoTrader:
         self.amount_yes14_button.bind('<Button-1>', self.click_amount)
         self.amount_yes14_button.grid(row=4, column=2, padx=5, pady=5)
 
+        self.amount_yes15_button = ttk.Button(buy_button_frame, text="Amount-Yes15", width=15)
+        self.amount_yes15_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes15_button.grid(row=4, column=3, padx=5, pady=5)
+        # 第六行按钮
+        self.amount_yes16_button = ttk.Button(buy_button_frame, text="Amount-Yes16", width=15)
+        self.amount_yes16_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes16_button.grid(row=5, column=0, padx=5, pady=5)
+
+        self.amount_yes17_button = ttk.Button(buy_button_frame, text="Amount-Yes17", width=15)
+        self.amount_yes17_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes17_button.grid(row=5, column=1, padx=5, pady=5)
+
+        self.amount_yes18_button = ttk.Button(buy_button_frame, text="Amount-Yes18", width=15)
+        self.amount_yes18_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes18_button.grid(row=5, column=2, padx=5, pady=5)
+
+        self.amount_yes19_button = ttk.Button(buy_button_frame, text="Amount-Yes19", width=15)
+        self.amount_yes19_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes19_button.grid(row=5, column=3, padx=5, pady=5)
+        # 第七行按钮
+        self.amount_yes20_button = ttk.Button(buy_button_frame, text="Amount-Yes20", width=15)
+        self.amount_yes20_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes20_button.grid(row=6, column=0, padx=5, pady=5)
+
+        self.amount_yes21_button = ttk.Button(buy_button_frame, text="Amount-Yes21", width=15)
+        self.amount_yes21_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes21_button.grid(row=6, column=1, padx=5, pady=5)
+
+        self.amount_yes22_button = ttk.Button(buy_button_frame, text="Amount-Yes22", width=15)
+        self.amount_yes22_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes22_button.grid(row=6, column=2, padx=5, pady=5)
+
+        self.amount_yes23_button = ttk.Button(buy_button_frame, text="Amount-Yes23", width=15)
+        self.amount_yes23_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes23_button.grid(row=6, column=3, padx=5, pady=5)
+        # 第八行按钮
+        self.amount_yes24_button = ttk.Button(buy_button_frame, text="Amount-Yes24", width=15)      
+        self.amount_yes24_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes24_button.grid(row=7, column=0, padx=5, pady=5)
+        
+        self.amount_yes25_button = ttk.Button(buy_button_frame, text="Amount-Yes25", width=15)  
+        self.amount_yes25_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes25_button.grid(row=7, column=1, padx=5, pady=5)
+        
+        self.amount_yes26_button = ttk.Button(buy_button_frame, text="Amount-Yes26", width=15)  
+        self.amount_yes26_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes26_button.grid(row=7, column=2, padx=5, pady=5)
+        
+        self.amount_yes27_button = ttk.Button(buy_button_frame, text="Amount-Yes27", width=15)  
+        self.amount_yes27_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes27_button.grid(row=7, column=3, padx=5, pady=5)
+        # 第九行按钮
+        self.amount_yes28_button = ttk.Button(buy_button_frame, text="Amount-Yes28", width=15)  
+        self.amount_yes28_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes28_button.grid(row=8, column=0, padx=5, pady=5)
+        
+        self.amount_yes29_button = ttk.Button(buy_button_frame, text="Amount-Yes29", width=15)  
+        self.amount_yes29_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes29_button.grid(row=8, column=1, padx=5, pady=5)
+        
+        self.amount_yes30_button = ttk.Button(buy_button_frame, text="Amount-Yes30", width=15)  
+        self.amount_yes30_button.bind('<Button-1>', self.click_amount)
+        self.amount_yes30_button.grid(row=8, column=2, padx=5, pady=5)
+        # 第一行 NO
         self.amount_no0_button = ttk.Button(buy_button_frame, text="Amount-No0", width=15)
         self.amount_no0_button.bind('<Button-1>', self.click_amount)
-        self.amount_no0_button.grid(row=5, column=0, padx=5, pady=5)
-
+        self.amount_no0_button.grid(row=9, column=0, padx=5, pady=5)
+        
         self.amount_no1_button = ttk.Button(buy_button_frame, text="Amount-No1", width=15)
         self.amount_no1_button.bind('<Button-1>', self.click_amount)
-        self.amount_no1_button.grid(row=5, column=1, padx=5, pady=5)
+        self.amount_no1_button.grid(row=9, column=1, padx=5, pady=5)
 
         self.amount_no2_button = ttk.Button(buy_button_frame, text="Amount-No2", width=15)
         self.amount_no2_button.bind('<Button-1>', self.click_amount)
-        self.amount_no2_button.grid(row=5, column=2, padx=5, pady=5)
+        self.amount_no2_button.grid(row=9, column=2, padx=5, pady=5)
 
         self.amount_no3_button = ttk.Button(buy_button_frame, text="Amount-No3", width=15)
         self.amount_no3_button.bind('<Button-1>', self.click_amount)
-        self.amount_no3_button.grid(row=5, column=3, padx=5, pady=5)
+        self.amount_no3_button.grid(row=9, column=3, padx=5, pady=5)
 
         self.amount_no4_button = ttk.Button(buy_button_frame, text="Amount-No4", width=15)
         self.amount_no4_button.bind('<Button-1>', self.click_amount)
-        self.amount_no4_button.grid(row=6, column=0, padx=5, pady=5)
+        self.amount_no4_button.grid(row=10, column=0, padx=5, pady=5)
 
         self.amount_no5_button = ttk.Button(buy_button_frame, text="Amount-No5", width=15)
         self.amount_no5_button.bind('<Button-1>', self.click_amount)
-        self.amount_no5_button.grid(row=6, column=1, padx=5, pady=5)
+        self.amount_no5_button.grid(row=10, column=1, padx=5, pady=5)
 
         self.amount_no6_button = ttk.Button(buy_button_frame, text="Amount-No6", width=15)
         self.amount_no6_button.bind('<Button-1>', self.click_amount)
-        self.amount_no6_button.grid(row=6, column=2, padx=5, pady=5)
+        self.amount_no6_button.grid(row=10, column=2, padx=5, pady=5)
 
         self.amount_no7_button = ttk.Button(buy_button_frame, text="Amount-No7", width=15)
         self.amount_no7_button.bind('<Button-1>', self.click_amount)
-        self.amount_no7_button.grid(row=6, column=3, padx=5, pady=5)
+        self.amount_no7_button.grid(row=10, column=3, padx=5, pady=5)
 
         self.amount_no8_button = ttk.Button(buy_button_frame, text="Amount-No8", width=15)
         self.amount_no8_button.bind('<Button-1>', self.click_amount)
-        self.amount_no8_button.grid(row=7, column=0, padx=5, pady=5)
+        self.amount_no8_button.grid(row=11, column=0, padx=5, pady=5)
 
         self.amount_no9_button = ttk.Button(buy_button_frame, text="Amount-No9", width=15)
         self.amount_no9_button.bind('<Button-1>', self.click_amount)
-        self.amount_no9_button.grid(row=7, column=1, padx=5, pady=5)
+        self.amount_no9_button.grid(row=11, column=1, padx=5, pady=5)
 
         self.amount_no10_button = ttk.Button(buy_button_frame, text="Amount-No10", width=15)
         self.amount_no10_button.bind('<Button-1>', self.click_amount)
-        self.amount_no10_button.grid(row=7, column=2, padx=5, pady=5)
+        self.amount_no10_button.grid(row=11, column=2, padx=5, pady=5)
 
         self.amount_no11_button = ttk.Button(buy_button_frame, text="Amount-No11", width=15)
         self.amount_no11_button.bind('<Button-1>', self.click_amount)
-        self.amount_no11_button.grid(row=7, column=3, padx=5, pady=5)
+        self.amount_no11_button.grid(row=11, column=3, padx=5, pady=5)
 
         # 第八行按钮 - Amount-No12 到 Amount-No14
         self.amount_no12_button = ttk.Button(buy_button_frame, text="Amount-No12", width=15)
         self.amount_no12_button.bind('<Button-1>', self.click_amount)
-        self.amount_no12_button.grid(row=8, column=0, padx=5, pady=5)
+        self.amount_no12_button.grid(row=12, column=0, padx=5, pady=5)
 
         self.amount_no13_button = ttk.Button(buy_button_frame, text="Amount-No13", width=15)
         self.amount_no13_button.bind('<Button-1>', self.click_amount)
-        self.amount_no13_button.grid(row=8, column=1, padx=5, pady=5)
+        self.amount_no13_button.grid(row=12, column=1, padx=5, pady=5)
 
         self.amount_no14_button = ttk.Button(buy_button_frame, text="Amount-No14", width=15)
         self.amount_no14_button.bind('<Button-1>', self.click_amount)
-        self.amount_no14_button.grid(row=8, column=2, padx=5, pady=5)
+        self.amount_no14_button.grid(row=12, column=2, padx=5, pady=5)
+
+        self.amount_no15_button = ttk.Button(buy_button_frame, text="Amount-No15", width=15)
+        self.amount_no15_button.bind('<Button-1>', self.click_amount)
+        self.amount_no15_button.grid(row=12, column=3, padx=5, pady=5)
+
+        self.amount_no16_button = ttk.Button(buy_button_frame, text="Amount-No16", width=15)
+        self.amount_no16_button.bind('<Button-1>', self.click_amount)
+        self.amount_no16_button.grid(row=13, column=0, padx=5, pady=5)
+
+        self.amount_no17_button = ttk.Button(buy_button_frame, text="Amount-No17", width=15)
+        self.amount_no17_button.bind('<Button-1>', self.click_amount)
+        self.amount_no17_button.grid(row=13, column=1, padx=5, pady=5)
+
+        self.amount_no18_button = ttk.Button(buy_button_frame, text="Amount-No18", width=15)
+        self.amount_no18_button.bind('<Button-1>', self.click_amount)
+        self.amount_no18_button.grid(row=13, column=2, padx=5, pady=5)
+
+        self.amount_no19_button = ttk.Button(buy_button_frame, text="Amount-No19", width=15)
+        self.amount_no19_button.bind('<Button-1>', self.click_amount)
+        self.amount_no19_button.grid(row=13, column=3, padx=5, pady=5)
+
+        self.amount_no20_button = ttk.Button(buy_button_frame, text="Amount-No20", width=15)
+        self.amount_no20_button.bind('<Button-1>', self.click_amount)
+        self.amount_no20_button.grid(row=14, column=0, padx=5, pady=5)
+
+        self.amount_no21_button = ttk.Button(buy_button_frame, text="Amount-No21", width=15)
+        self.amount_no21_button.bind('<Button-1>', self.click_amount)
+        self.amount_no21_button.grid(row=14, column=1, padx=5, pady=5)
+
+        self.amount_no22_button = ttk.Button(buy_button_frame, text="Amount-No22", width=15)
+        self.amount_no22_button.bind('<Button-1>', self.click_amount)
+        self.amount_no22_button.grid(row=14, column=2, padx=5, pady=5)
+
+        self.amount_no23_button = ttk.Button(buy_button_frame, text="Amount-No23", width=15)
+        self.amount_no23_button.bind('<Button-1>', self.click_amount)
+        self.amount_no23_button.grid(row=14, column=3, padx=5, pady=5)
+
+        self.amount_no24_button = ttk.Button(buy_button_frame, text="Amount-No24", width=15)
+        self.amount_no24_button.bind('<Button-1>', self.click_amount)
+        self.amount_no24_button.grid(row=15, column=0, padx=5, pady=5)
+
+        self.amount_no25_button = ttk.Button(buy_button_frame, text="Amount-No25", width=15)
+        self.amount_no25_button.bind('<Button-1>', self.click_amount)
+        self.amount_no25_button.grid(row=15, column=1, padx=5, pady=5)
+
+        self.amount_no26_button = ttk.Button(buy_button_frame, text="Amount-No26", width=15)
+        self.amount_no26_button.bind('<Button-1>', self.click_amount)
+        self.amount_no26_button.grid(row=15, column=2, padx=5, pady=5)
+
+        self.amount_no27_button = ttk.Button(buy_button_frame, text="Amount-No27", width=15)
+        self.amount_no27_button.bind('<Button-1>', self.click_amount)
+        self.amount_no27_button.grid(row=15, column=3, padx=5, pady=5)
+
+        self.amount_no28_button = ttk.Button(buy_button_frame, text="Amount-No28", width=15)
+        self.amount_no28_button.bind('<Button-1>', self.click_amount)
+        self.amount_no28_button.grid(row=16, column=0, padx=5, pady=5)
+
+        self.amount_no29_button = ttk.Button(buy_button_frame, text="Amount-No29", width=15)
+        self.amount_no29_button.bind('<Button-1>', self.click_amount)
+        self.amount_no29_button.grid(row=16, column=1, padx=5, pady=5)
+
+        self.amount_no30_button = ttk.Button(buy_button_frame, text="Amount-No30", width=15)
+        self.amount_no30_button.bind('<Button-1>', self.click_amount)
+        self.amount_no30_button.grid(row=16, column=2, padx=5, pady=5)
 
         # 配置列权重使按钮均匀分布
         for i in range(4):
@@ -774,8 +1063,9 @@ class CryptoTrader:
         """设置 Yes/No 各级金额"""
         try:
             #设置重试参数
-            max_retry = 3
+            max_retry = 5
             retry_count = 0
+            cash_value = None
 
             while retry_count < max_retry:
                 try:
@@ -792,9 +1082,11 @@ class CryptoTrader:
                 except Exception as e:
                     retry_count += 1
                     if retry_count < max_retry:
-                        time.sleep(1)
+                        time.sleep(2)
                     else:
                         raise ValueError("获取Cash值失败")
+            if cash_value is None:
+                raise ValueError("获取Cash值失败")
             
             # 获取金额设置中的百分比值
             initial_percent = float(self.initial_amount_entry.get()) / 100  # 初始金额百分比
@@ -817,11 +1109,11 @@ class CryptoTrader:
             no1_entry.delete(0, tk.END)
             no1_entry.insert(0, f"{yes1_amount:.2f}")
             
-            # 计算并设置 Yes2-14/No2-14 (每级是上一级的n_rebound_percent)
+            # 计算并设置 Yes2-30/No2-30 (每级是上一级的n_rebound_percent)
             prev_yes_amount = yes1_amount
             prev_no_amount = yes1_amount
             
-            for i in range(2, 15):  # 2-14
+            for i in range(2, 31):  # 2-30
                 # 计算新金额
                 new_amount = prev_yes_amount * n_rebound_percent
                 # 更新Yes金额
@@ -835,61 +1127,74 @@ class CryptoTrader:
                 # 更新前一级金额
                 prev_yes_amount = new_amount
                 prev_no_amount = new_amount
-            self.logger.info("金额更新完成") 
+            self.logger.info("金额更新完成")
+            self.update_status("金额设置成功")
         except Exception as e:
             self.logger.error(f"设置金额失败: {str(e)}")
             self.update_status("金额设置失败，请检查Cash值是否正确")
+            # 如果失败，安排重试
+            self.schedule_retry_update()
+
+    def schedule_retry_update(self):
+        """安排重试更新金额"""
+        self.root.after(5000, self.set_yes_no_cash)  # 5秒后重试
 
     def start_monitoring(self):
         """开始监控"""
+        # 直接使用当前显示的网址
+        self.current_url = self.url_entry.get()
+        self.logger.info(f"开始监控网址: {self.current_url}")
+            
+        self.running = True
+        self.update_status("监控运行中...")
+
+        # 启用开始按钮，启用停止按钮
+        self.start_button['state'] = 'disabled'
+        self.stop_button['state'] = 'normal'
+            
+        # 将"开始监控"文字变为红色
+        self.start_button.configure(style='Red.TButton')
+        # 恢复"停止监控"文字为黑色
+        self.stop_button.configure(style='Black.TButton')
+        # 重置交易次数计数器
+        self.trade_count = 0
+            
+        # 启动浏览器作线程
+        threading.Thread(target=self._start_browser_monitoring, args=(self.current_url,), daemon=True).start()
+        
+        # 启用更金额按钮
+        self.update_amount_button['state'] = 'normal'
+        # 自动点击更新金额按钮
+        self.schedule_update_amount()
+
+        # 启动URL监控
+        self.start_url_monitoring()
+        # 启动登录状态监控
+        self.start_login_monitoring()
+        # 启动页面刷新定时器
+        self.schedule_refresh()
+
+    def schedule_update_amount(self, retry_count=0):
+        """安排更新金额按钮点击，带重试机制"""
         try:
-            # 保存正确的监控网址
-            self.current_url = self.url_entry.get()
-            self.logger.info(f"设置监控网址: {self.current_url}")
-            
-            # 先进行基本检查
-            new_url = self.url_entry.get().strip()
-            if not new_url:
-                messagebox.showwarning("警告", "请输入网址")
-                return  
-            # 检查URL格式
-            if not new_url.startswith(('http://', 'https://')):
-                new_url = 'https://' + new_url
-                self.url_entry.delete(0, tk.END)
-                self.url_entry.insert(0, new_url)
-            # 启用开始按钮，启用停止按钮
-            self.start_button['state'] = 'disabled'
-            self.stop_button['state'] = 'normal'
-            
-            # 将"开始监控"文字变为红色
-            self.start_button.configure(style='Red.TButton')
-            # 恢复"停止监控"文字为黑色
-            self.stop_button.configure(style='Black.TButton')
-            
-            # 启用更金额按钮
-            self.update_amount_button['state'] = 'normal'
-            
-            # 5秒后自动点击更新金额按钮
-            self.root.after(5000, self.update_amount_button.invoke)
-
-            # 重置交易次数计数器
-            self.trade_count = 0
-            
-            # 启动浏览器作线程
-            threading.Thread(target=self._start_browser_monitoring, args=(new_url,), daemon=True).start()
-
-            # 启动页面刷新定时器
-            self.schedule_refresh()
-            
-            # 启动URL监控
-            self.start_url_monitoring()
-            
-            # 启动登录状态监控
-            self.start_login_monitoring()
-            
+            if retry_count < 15:  # 最多重试15次
+                self.logger.info(f"安排更新金额操作 (尝试 {retry_count + 1}/15)")
+                # 5秒后执行
+                self.root.after(2000, lambda: self.try_update_amount(retry_count))
+            else:
+                self.logger.warning("更新金额操作达到最大重试次数")
         except Exception as e:
-            self.logger.error(f"启动监控失败: {str(e)}")
-            messagebox.showerror("错误", f"启动监控失败: {str(e)}")
+            self.logger.error(f"安排更新金额操作失败: {str(e)}")
+
+    def try_update_amount(self, current_retry=0):
+        """尝试更新金额"""
+        try:
+            self.update_amount_button.invoke()
+            self.logger.info("更新金额操作执行成功")
+        except Exception as e:
+            self.logger.error(f"更新金额操作失败 (尝试 {current_retry + 1}/15): {str(e)}")
+            # 如果失败，安排下一次重试
+            self.schedule_update_amount(current_retry + 1)
 
     def start_url_monitoring(self):
         """启动URL监控"""
@@ -917,23 +1222,28 @@ class CryptoTrader:
             if self.running and self.driver:
                 try:
                     # 检查登录按钮
-                    login_button = self.driver.find_element(By.XPATH, 
-                        '//*[@id="__pm_viewport"]/nav[1]/div[1]/div[3]/div/nav/div/ul/div[1]/div/button')
+                    try:
+                        login_button = self.driver.find_element(By.XPATH, 
+                            '//*[@id="__pm_viewport"]/nav[1]/div[1]/div[3]/div/nav/div/ul/div[1]/div/button')
+                        
+                        if login_button.text == "Log In":
+                            self.logger.warning("检测到未登录状态，正在执行登录...")
+                            self.check_and_handle_login()
+                        else:
+                            self.logger.debug("当前为登录状态")
+                    except NoSuchElementException:
+                        # 找不到登录按钮,说明已经登录
+                        pass
                     
-                    if login_button.text == "Log In":
-                        self.logger.warning("检测到未登录状态，正在执行登录...")
-                        self.check_and_handle_login()
-                    else:
-                        self.logger.debug("当前为登录状态")
                 except Exception as e:
                     self.logger.error(f"登录状态检查出错: {str(e)}")
                 
                 # 继续监控
                 if self.running:
-                    self.login_check_timer = self.root.after(5000, check_login_status)  # 每5秒检查一次
+                    self.login_check_timer = self.root.after(10000, check_login_status)  # 每10秒检查一次
         
         # 开始第一次检查
-        self.login_check_timer = self.root.after(1000, check_login_status)
+        self.login_check_timer = self.root.after(20000, check_login_status)
 
     def _start_browser_monitoring(self, new_url):
         """在新线程中执行浏览器操作"""
@@ -1229,7 +1539,7 @@ class CryptoTrader:
                     self.Forth_trade()
                     self.Fifth_trade()
                     self.Sixth_trade()
-                    self.Seventh_trade()  # 新增
+                    self.Seventh_trade()
                     self.Eighth_trade()
                     self.Ninth_trade()
                     self.Tenth_trade()
@@ -1237,9 +1547,24 @@ class CryptoTrader:
                     self.Twelfth_trade()
                     self.Thirteenth_trade()
                     self.Fourteenth_trade()
+                    self.Fifteenth_trade()
+                    self.Sixteenth_trade()
+                    self.Seventeenth_trade()
+                    self.Eighteenth_trade()
+                    self.Nineteenth_trade()
+                    self.Twentieth_trade()
+                    self.Twenty_First_trade()
+                    self.Twenty_Second_trade()
+                    self.Twenty_Third_trade()
+                    self.Twenty_Fourth_trade()
+                    self.Twenty_Fifth_trade()
+                    self.Twenty_Sixth_trade()
+                    self.Twenty_Seventh_trade()
+                    self.Twenty_Eighth_trade()
+                    self.Twenty_Ninth_trade()
+                    self.Thirtieth_trade()
                     self.Sell_yes()
-                    self.Sell_no()
-                    
+                    self.Sell_no() 
                 else:
                     self.update_status("无法获取价格数据")  
             except Exception as e:
@@ -1389,7 +1714,7 @@ class CryptoTrader:
             position_value = None
             try:
                 # 尝试获取第一行YES的标签值，如果不存在会直接进入except块
-                first_position = WebDriverWait(self.driver, 2).until(  # 缩短等待时间到2秒
+                first_position = WebDriverWait(self.driver, 1).until(  # 缩短等待时间到1秒
                     EC.presence_of_element_located((By.XPATH, 
                         '//div[@class="c-dhzjXW c-chKWaB c-chKWaB-eVTycx-color-green c-dhzjXW-ibxvuTL-css" and text()="Yes"]'))
                 )# //div[@class="c-dhzjXW c-chKWaB c-chKWaB-eVTycx-color-green c-dhzjXW-ibxvuTL-css" and text()="Yes"]
@@ -1682,6 +2007,54 @@ class CryptoTrader:
             elif button_text == "Amount-Yes14":
                 yes14_amount_entry = self.yes_frame.grid_slaves(row=29, column=1)[0]
                 amount = yes14_amount_entry.get()
+            elif button_text == "Amount-Yes15":
+                yes15_amount_entry = self.yes_frame.grid_slaves(row=31, column=1)[0]
+                amount = yes15_amount_entry.get()
+            elif button_text == "Amount-Yes16":
+                yes16_amount_entry = self.yes_frame.grid_slaves(row=33, column=1)[0]
+                amount = yes16_amount_entry.get()
+            elif button_text == "Amount-Yes17":
+                yes17_amount_entry = self.yes_frame.grid_slaves(row=35, column=1)[0]
+                amount = yes17_amount_entry.get()
+            elif button_text == "Amount-Yes18":
+                yes18_amount_entry = self.yes_frame.grid_slaves(row=37, column=1)[0]
+                amount = yes18_amount_entry.get()
+            elif button_text == "Amount-Yes19":
+                yes19_amount_entry = self.yes_frame.grid_slaves(row=39, column=1)[0]
+                amount = yes19_amount_entry.get()
+            elif button_text == "Amount-Yes20":
+                yes20_amount_entry = self.yes_frame.grid_slaves(row=41, column=1)[0]
+                amount = yes20_amount_entry.get()
+            elif button_text == "Amount-Yes21":
+                yes21_amount_entry = self.yes_frame.grid_slaves(row=43, column=1)[0]
+                amount = yes21_amount_entry.get()
+            elif button_text == "Amount-Yes22":
+                yes22_amount_entry = self.yes_frame.grid_slaves(row=45, column=1)[0]
+                amount = yes22_amount_entry.get()
+            elif button_text == "Amount-Yes23":
+                yes23_amount_entry = self.yes_frame.grid_slaves(row=47, column=1)[0]
+                amount = yes23_amount_entry.get()
+            elif button_text == "Amount-Yes24":
+                yes24_amount_entry = self.yes_frame.grid_slaves(row=49, column=1)[0]
+                amount = yes24_amount_entry.get()
+            elif button_text == "Amount-Yes25":
+                yes25_amount_entry = self.yes_frame.grid_slaves(row=51, column=1)[0]
+                amount = yes25_amount_entry.get()
+            elif button_text == "Amount-Yes26":
+                yes26_amount_entry = self.yes_frame.grid_slaves(row=53, column=1)[0]
+                amount = yes26_amount_entry.get()
+            elif button_text == "Amount-Yes27":
+                yes27_amount_entry = self.yes_frame.grid_slaves(row=55, column=1)[0]
+                amount = yes27_amount_entry.get()
+            elif button_text == "Amount-Yes28":
+                yes28_amount_entry = self.yes_frame.grid_slaves(row=57, column=1)[0]
+                amount = yes28_amount_entry.get()
+            elif button_text == "Amount-Yes29":
+                yes29_amount_entry = self.yes_frame.grid_slaves(row=59, column=1)[0]
+                amount = yes29_amount_entry.get()
+            elif button_text == "Amount-Yes30":
+                yes30_amount_entry = self.yes_frame.grid_slaves(row=61, column=1)[0]
+                amount = yes30_amount_entry.get()
             elif button_text == "Amount-No0":
                 amount = self.no_amount_entry.get()
             elif button_text == "Amount-No1":
@@ -1726,6 +2099,54 @@ class CryptoTrader:
             elif button_text == "Amount-No14":
                 no14_amount_entry = self.no_frame.grid_slaves(row=29, column=1)[0]
                 amount = no14_amount_entry.get()
+            elif button_text == "Amount-No15":
+                no15_amount_entry = self.no_frame.grid_slaves(row=31, column=1)[0]
+                amount = no15_amount_entry.get()
+            elif button_text == "Amount-No16":
+                no16_amount_entry = self.no_frame.grid_slaves(row=33, column=1)[0]
+                amount = no16_amount_entry.get()
+            elif button_text == "Amount-No17":
+                no17_amount_entry = self.no_frame.grid_slaves(row=35, column=1)[0]
+                amount = no17_amount_entry.get()
+            elif button_text == "Amount-No18":
+                no18_amount_entry = self.no_frame.grid_slaves(row=37, column=1)[0]
+                amount = no18_amount_entry.get()
+            elif button_text == "Amount-No19":
+                no19_amount_entry = self.no_frame.grid_slaves(row=39, column=1)[0]
+                amount = no19_amount_entry.get()
+            elif button_text == "Amount-No20":
+                no20_amount_entry = self.no_frame.grid_slaves(row=41, column=1)[0]
+                amount = no20_amount_entry.get()
+            elif button_text == "Amount-No21":
+                no21_amount_entry = self.no_frame.grid_slaves(row=43, column=1)[0]
+                amount = no21_amount_entry.get()
+            elif button_text == "Amount-No22":
+                no22_amount_entry = self.no_frame.grid_slaves(row=45, column=1)[0]
+                amount = no22_amount_entry.get()
+            elif button_text == "Amount-No23":
+                no23_amount_entry = self.no_frame.grid_slaves(row=47, column=1)[0]
+                amount = no23_amount_entry.get()
+            elif button_text == "Amount-No24":
+                no24_amount_entry = self.no_frame.grid_slaves(row=49, column=1)[0]
+                amount = no24_amount_entry.get()
+            elif button_text == "Amount-No25":
+                no25_amount_entry = self.no_frame.grid_slaves(row=51, column=1)[0]
+                amount = no25_amount_entry.get()
+            elif button_text == "Amount-No26":
+                no26_amount_entry = self.no_frame.grid_slaves(row=53, column=1)[0]
+                amount = no26_amount_entry.get()
+            elif button_text == "Amount-No27":
+                no27_amount_entry = self.no_frame.grid_slaves(row=55, column=1)[0]
+                amount = no27_amount_entry.get()
+            elif button_text == "Amount-No28":
+                no28_amount_entry = self.no_frame.grid_slaves(row=57, column=1)[0]
+                amount = no28_amount_entry.get()
+            elif button_text == "Amount-No29":
+                no29_amount_entry = self.no_frame.grid_slaves(row=59, column=1)[0]
+                amount = no29_amount_entry.get()
+            elif button_text == "Amount-No30":
+                no30_amount_entry = self.no_frame.grid_slaves(row=61, column=1)[0]
+                amount = no30_amount_entry.get()
             else:
                 amount = "0.0"
             # 输入金额
@@ -1804,13 +2225,13 @@ class CryptoTrader:
                     no1_price_entry = self.no_frame.grid_slaves(row=2, column=1)[0]
                     no1_price_entry.delete(0, tk.END)
                     no1_price_entry.insert(0, "0.53")
-                    # 设置 Yes6和No6价格为0.85
-                    yes6_price_entry = self.yes_frame.grid_slaves(row=12, column=1)[0]
-                    yes6_price_entry.delete(0, tk.END)
-                    yes6_price_entry.insert(0, "0.00")
-                    no6_price_entry = self.no_frame.grid_slaves(row=12, column=1)[0]
-                    no6_price_entry.delete(0, tk.END)
-                    no6_price_entry.insert(0, "0.00")
+                    # 设置 Yes30和No30价格为0.99
+                    yes30_price_entry = self.yes_frame.grid_slaves(row=62, column=1)[0]
+                    yes30_price_entry.delete(0, tk.END)
+                    yes30_price_entry.insert(0, "0.99")
+                    no30_price_entry = self.no_frame.grid_slaves(row=62, column=1)[0]
+                    no30_price_entry.delete(0, tk.END)
+                    no30_price_entry.insert(0, "0.99")
                     # 增加等待 1秒
                     time.sleep(1)
                     
@@ -1848,13 +2269,13 @@ class CryptoTrader:
                     yes1_price_entry = self.yes_frame.grid_slaves(row=2, column=1)[0]
                     yes1_price_entry.delete(0, tk.END)
                     yes1_price_entry.insert(0, "0.53")
-                    # 设置 Yes6和No6价格为0.85
-                    yes6_price_entry = self.yes_frame.grid_slaves(row=12, column=1)[0]
-                    yes6_price_entry.delete(0, tk.END)
-                    yes6_price_entry.insert(0, "0.00")
-                    no6_price_entry = self.no_frame.grid_slaves(row=12, column=1)[0]
-                    no6_price_entry.delete(0, tk.END)
-                    no6_price_entry.insert(0, "0.00")
+                    # 设置 Yes30和No30价格为0.99
+                    yes30_price_entry = self.yes_frame.grid_slaves(row=62, column=1)[0]
+                    yes30_price_entry.delete(0, tk.END)
+                    yes30_price_entry.insert(0, "0.99")
+                    no30_price_entry = self.no_frame.grid_slaves(row=62, column=1)[0]
+                    no30_price_entry.delete(0, tk.END)
+                    no30_price_entry.insert(0, "0.99")
                     # 增加等待 1秒
                     time.sleep(1)
         except ValueError as e:
@@ -2046,6 +2467,7 @@ class CryptoTrader:
                     no3_price_entry = self.no_frame.grid_slaves(row=6, column=1)[0]
                     no3_price_entry.delete(0, tk.END)
                     no3_price_entry.insert(0, "0.53")
+
                     # 增加交易次数
                     self.trade_count += 1
                     # 发送交易邮件
@@ -2077,7 +2499,7 @@ class CryptoTrader:
                     no2_price_entry.delete(0, tk.END)
                     no2_price_entry.insert(0, "0.00")
                     
-                    # 设置Yes3价格为0.54
+                    # 设置Yes3价格为0.53
                     yes3_price_entry = self.yes_frame.grid_slaves(row=6, column=1)[0]
                     yes3_price_entry.delete(0, tk.END)
                     yes3_price_entry.insert(0, "0.53")
@@ -2915,7 +3337,7 @@ class CryptoTrader:
             self.is_trading = True
             if not self.driver:
                 raise Exception("浏览器连接丢失")
-            
+                
             # 获取当前Yes和No价格
             prices = self.driver.execute_script("""
                 function getPrices() {
@@ -3321,13 +3743,10 @@ class CryptoTrader:
                     yes13_price_entry.insert(0, "0.00")
                     no13_price_entry.delete(0, tk.END)
                     no13_price_entry.insert(0, "0.00")
-                    # 设置Yes14和No14价格为0.00
-                    yes14_price_entry = self.yes_frame.grid_slaves(row=28, column=1)[0]
-                    yes14_price_entry.delete(0, tk.END)
-                    yes14_price_entry.insert(0, "0.00")
+                    # 设置No14价格为0.53
                     no14_price_entry = self.no_frame.grid_slaves(row=28, column=1)[0]
                     no14_price_entry.delete(0, tk.END)
-                    no14_price_entry.insert(0, "0.00")
+                    no14_price_entry.insert(0, "0.53")
                     
                     # 增加交易次数
                     self.trade_count += 1
@@ -3360,13 +3779,10 @@ class CryptoTrader:
                     yes13_price_entry.insert(0, "0.00")
                     no13_price_entry.delete(0, tk.END)
                     no13_price_entry.insert(0, "0.00")
-                    # 设置Yes14和No14价格为0.00
+                    # 设置Yes14价格为0.53
                     yes14_price_entry = self.yes_frame.grid_slaves(row=28, column=1)[0]
                     yes14_price_entry.delete(0, tk.END)
-                    yes14_price_entry.insert(0, "0.00")
-                    no14_price_entry = self.no_frame.grid_slaves(row=28, column=1)[0]
-                    no14_price_entry.delete(0, tk.END)
-                    no14_price_entry.insert(0, "0.00")
+                    yes14_price_entry.insert(0, "0.53")
                     
                     # 增加交易次数
                     self.trade_count += 1
@@ -3382,6 +3798,1756 @@ class CryptoTrader:
         except Exception as e:
             self.logger.error(f"Fourteenth_trade执行失败: {str(e)}")
             self.update_status(f"Fourteenth_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Fifteenth_trade(self):
+        """第15次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes14和No14的价格输入框
+                yes14_price_entry = self.yes_frame.grid_slaves(row=28, column=1)[0]
+                no14_price_entry = self.no_frame.grid_slaves(row=28, column=1)[0]
+                yes14_target = float(yes14_price_entry.get())
+                no14_target = float(no14_price_entry.get())
+                
+                # 检查Yes14价格匹配
+                if abs(yes14_target - yes_price) < 0.0001 and yes14_target > 0:
+                    self.logger.info("Yes 14价格匹配，执行自动交易")
+                    self.amount_yes14_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Fifteenth_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes14和No14价格为0.00
+                    yes14_price_entry.delete(0, tk.END)
+                    yes14_price_entry.insert(0, "0.00")
+                    no14_price_entry.delete(0, tk.END)
+                    no14_price_entry.insert(0, "0.00")
+                    
+                    # 设置No15价格为0.53
+                    no15_price_entry = self.no_frame.grid_slaves(row=30, column=1)[0]
+                    no15_price_entry.delete(0, tk.END)
+                    no15_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 14",
+                        price=yes_price,
+                        amount=float(yes14_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+
+                # 检查No14价格匹配
+                elif abs(no14_target - no_price) < 0.0001 and no14_target > 0:
+                    self.logger.info("No 14价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no14_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Fifteenth_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes14和No14价格为0.00
+                    yes14_price_entry.delete(0, tk.END)
+                    yes14_price_entry.insert(0, "0.00")
+                    no14_price_entry.delete(0, tk.END)
+                    no14_price_entry.insert(0, "0.00")
+                    
+                    # 设置Yes15价格为0.53
+                    yes15_price_entry = self.yes_frame.grid_slaves(row=30, column=1)[0]
+                    yes15_price_entry.delete(0, tk.END)
+                    yes15_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 14",
+                        price=no_price,
+                        amount=float(no14_price_entry.get()),
+                        trade_count=self.trade_count
+                    )          
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"fifteenth_trade执行失败: {str(e)}")
+            self.update_status(f"fifteenth_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Sixteenth_trade(self):
+        """第16次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes15和No15的价格输入框
+                yes15_price_entry = self.yes_frame.grid_slaves(row=30, column=1)[0]
+                no15_price_entry = self.no_frame.grid_slaves(row=30, column=1)[0]
+                yes15_target = float(yes15_price_entry.get())
+                no15_target = float(no15_price_entry.get())
+                
+                # 检查Yes15价格匹配
+                if abs(yes15_target - yes_price) < 0.0001 and yes15_target > 0:
+                    self.logger.info("Yes 15价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes15_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Sixteenth_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes15和No15价格为0.00
+                    yes15_price_entry.delete(0, tk.END)
+                    yes15_price_entry.insert(0, "0.00")
+                    no15_price_entry.delete(0, tk.END)
+                    no15_price_entry.insert(0, "0.00")
+                    
+                    # 设置No16价格为0.53
+                    no16_price_entry = self.no_frame.grid_slaves(row=32, column=1)[0]
+                    no16_price_entry.delete(0, tk.END)
+                    no16_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 15",
+                        price=yes_price,
+                        amount=float(yes15_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No15价格匹配
+                elif abs(no15_target - no_price) < 0.0001 and no15_target > 0:
+                    self.logger.info("No 15价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no15_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Sixteenth_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes15和No15价格为0.00
+                    yes15_price_entry.delete(0, tk.END)
+                    yes15_price_entry.insert(0, "0.00")
+                    no15_price_entry.delete(0, tk.END)
+                    no15_price_entry.insert(0, "0.00")
+                    
+                    # 设置Yes16价格为0.53
+                    yes16_price_entry = self.yes_frame.grid_slaves(row=32, column=1)[0]
+                    yes16_price_entry.delete(0, tk.END)
+                    yes16_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 15",
+                        price=no_price,
+                        amount=float(no15_price_entry.get()),
+                        trade_count=self.trade_count
+                    )    
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"sixteenth_trade执行失败: {str(e)}")
+            self.update_status(f"sixteenth_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Seventeenth_trade(self):
+        """第17次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes16和No16的价格输入框
+                yes16_price_entry = self.yes_frame.grid_slaves(row=32, column=1)[0]
+                no16_price_entry = self.no_frame.grid_slaves(row=32, column=1)[0]
+                yes16_target = float(yes16_price_entry.get())
+                no16_target = float(no16_price_entry.get())
+                
+                # 检查Yes16价格匹配
+                if abs(yes16_target - yes_price) < 0.0001 and yes16_target > 0:
+                    self.logger.info("Yes 16价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes16_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Seventeenth_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes16和No16价格为0.00
+                    yes16_price_entry.delete(0, tk.END)
+                    yes16_price_entry.insert(0, "0.00")
+                    no16_price_entry.delete(0, tk.END)
+                    no16_price_entry.insert(0, "0.00")
+                    
+                    # 设置No17价格
+                    no17_price_entry = self.no_frame.grid_slaves(row=34, column=1)[0]
+                    no17_price_entry.delete(0, tk.END)
+                    no17_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 16",
+                        price=yes_price,
+                        amount=float(yes16_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No16价格匹配
+                elif abs(no16_target - no_price) < 0.0001 and no16_target > 0:
+                    self.logger.info("No 16价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no16_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Seventeenth_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes16和No16价格为0.00
+                    yes16_price_entry.delete(0, tk.END)
+                    yes16_price_entry.insert(0, "0.00")
+                    no16_price_entry.delete(0, tk.END)
+                    no16_price_entry.insert(0, "0.00")
+                    
+                    # 设置No17价格
+                    no17_price_entry = self.no_frame.grid_slaves(row=34, column=1)[0]
+                    no17_price_entry.delete(0, tk.END)
+                    no17_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 16",
+                        price=no_price,
+                        amount=float(no16_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"seventeenth_trade执行失败: {str(e)}")
+            self.update_status(f"seventeenth_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Eighteenth_trade(self):
+        """第18次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes17和No17的价格输入框
+                yes17_price_entry = self.yes_frame.grid_slaves(row=34, column=1)[0]
+                no17_price_entry = self.no_frame.grid_slaves(row=34, column=1)[0]
+                yes17_target = float(yes17_price_entry.get())
+                no17_target = float(no17_price_entry.get())
+                
+                # 检查Yes17价格匹配
+                if abs(yes17_target - yes_price) < 0.0001 and yes17_target > 0:
+                    self.logger.info("Yes 17价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes17_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Eighteenth_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes17和No17价格为0.00
+                    yes17_price_entry.delete(0, tk.END)
+                    yes17_price_entry.insert(0, "0.00")
+                    no17_price_entry.delete(0, tk.END)
+                    no17_price_entry.insert(0, "0.00")
+                    
+                    # 设置No18价格
+                    no18_price_entry = self.no_frame.grid_slaves(row=36, column=1)[0]
+                    no18_price_entry.delete(0, tk.END)
+                    no18_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 17",
+                        price=yes_price,
+                        amount=float(yes17_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No17价格匹配
+                elif abs(no17_target - no_price) < 0.0001 and no17_target > 0:
+                    self.logger.info("No 17价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no17_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Eighteenth_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes17和No17价格为0.00
+                    yes17_price_entry.delete(0, tk.END)
+                    yes17_price_entry.insert(0, "0.00")
+                    no17_price_entry.delete(0, tk.END)
+                    no17_price_entry.insert(0, "0.00")
+                    
+                    # 设置Yes18价格  
+                    yes18_price_entry = self.yes_frame.grid_slaves(row=36, column=1)[0]
+                    yes18_price_entry.delete(0, tk.END)
+                    yes18_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 17",
+                        price=no_price,
+                        amount=float(no17_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"eighteenth_trade执行失败: {str(e)}")
+            self.update_status(f"eighteenth_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Nineteenth_trade(self):
+        """第19次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes18和No18的价格输入框
+                yes18_price_entry = self.yes_frame.grid_slaves(row=36, column=1)[0]
+                no18_price_entry = self.no_frame.grid_slaves(row=36, column=1)[0]
+                yes18_target = float(yes18_price_entry.get())
+                no18_target = float(no18_price_entry.get())
+                
+                # 检查Yes18价格匹配
+                if abs(yes18_target - yes_price) < 0.0001 and yes18_target > 0:
+                    self.logger.info("Yes 18价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes18_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Nineteenth_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes18和No18价格为0.00
+                    yes18_price_entry.delete(0, tk.END)
+                    yes18_price_entry.insert(0, "0.00")
+                    no18_price_entry.delete(0, tk.END)
+                    no18_price_entry.insert(0, "0.00")
+                    
+                    # 设置No19价格
+                    no19_price_entry = self.no_frame.grid_slaves(row=38, column=1)[0]
+                    no19_price_entry.delete(0, tk.END)
+                    no19_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 18",
+                        price=yes_price,
+                        amount=float(yes18_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No18价格匹配
+                elif abs(no18_target - no_price) < 0.0001 and no18_target > 0:
+                    self.logger.info("No 18价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no18_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Nineteenth_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes18和No18价格为0.00
+                    yes18_price_entry.delete(0, tk.END)
+                    yes18_price_entry.insert(0, "0.00")
+                    no18_price_entry.delete(0, tk.END)
+                    no18_price_entry.insert(0, "0.00")
+                    
+                    # 设置Yes19价格
+                    yes19_price_entry = self.yes_frame.grid_slaves(row=38, column=1)[0]
+                    yes19_price_entry.delete(0, tk.END)
+                    yes19_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 18",
+                        price=no_price,
+                        amount=float(no18_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"nineteenth_trade执行失败: {str(e)}")
+            self.update_status(f"nineteenth_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Twentieth_trade(self):
+        """第20次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes19和No19的价格输入框
+                yes19_price_entry = self.yes_frame.grid_slaves(row=38, column=1)[0]
+                no19_price_entry = self.no_frame.grid_slaves(row=38, column=1)[0]
+                yes19_target = float(yes19_price_entry.get())
+                no19_target = float(no19_price_entry.get())
+                
+                # 检查Yes19价格匹配
+                if abs(yes19_target - yes_price) < 0.0001 and yes19_target > 0:
+                    self.logger.info("Yes 19价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes19_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twentieth_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes19和No19价格为0.00
+                    yes19_price_entry.delete(0, tk.END)
+                    yes19_price_entry.insert(0, "0.00")
+                    no19_price_entry.delete(0, tk.END)
+                    no19_price_entry.insert(0, "0.00")
+                    
+                    # 设置No20价格
+                    no20_price_entry = self.no_frame.grid_slaves(row=40, column=1)[0]
+                    no20_price_entry.delete(0, tk.END)
+                    no20_price_entry.insert(0, "0.53")
+
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 19",
+                        price=yes_price,
+                        amount=float(yes19_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No19价格匹配
+                elif abs(no19_target - no_price) < 0.0001 and no19_target > 0:
+                    self.logger.info("No 19价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no19_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twentieth_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes19和No19价格为0.00
+                    yes19_price_entry.delete(0, tk.END)
+                    yes19_price_entry.insert(0, "0.00")
+                    no19_price_entry.delete(0, tk.END)
+                    no19_price_entry.insert(0, "0.00")
+                    
+                    # 设置YES20价格
+                    yes20_price_entry = self.yes_frame.grid_slaves(row=40, column=1)[0]
+                    yes20_price_entry.delete(0, tk.END)
+                    yes20_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 19",
+                        price=no_price,
+                        amount=float(no19_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"twentieth_trade执行失败: {str(e)}")
+            self.update_status(f"twentieth_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Twenty_First_trade(self):
+        """第21次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes20和No20的价格输入框
+                yes20_price_entry = self.yes_frame.grid_slaves(row=40, column=1)[0]
+                no20_price_entry = self.no_frame.grid_slaves(row=40, column=1)[0]
+                yes20_target = float(yes20_price_entry.get())
+                no20_target = float(no20_price_entry.get())
+                
+                # 检查Yes20价格匹配
+                if abs(yes20_target - yes_price) < 0.0001 and yes20_target > 0:
+                    self.logger.info("Yes 20价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes20_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_First_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes20和No20价格为0.00
+                    yes20_price_entry.delete(0, tk.END)
+                    yes20_price_entry.insert(0, "0.00")
+                    no20_price_entry.delete(0, tk.END)
+                    no20_price_entry.insert(0, "0.00")
+                    
+                    # 设置No21价格
+                    no21_price_entry = self.no_frame.grid_slaves(row=42, column=1)[0]
+                    no21_price_entry.delete(0, tk.END)
+                    no21_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 20",
+                        price=yes_price,
+                        amount=float(yes20_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No20价格匹配
+                elif abs(no20_target - no_price) < 0.0001 and no20_target > 0:
+                    self.logger.info("No 20价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no20_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_First_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes20和No20价格为0.00
+                    yes20_price_entry.delete(0, tk.END)
+                    yes20_price_entry.insert(0, "0.00")
+                    no20_price_entry.delete(0, tk.END)
+                    no20_price_entry.insert(0, "0.00")
+                    
+                    # 设置Yes21价格
+                    yes21_price_entry = self.yes_frame.grid_slaves(row=42, column=1)[0]
+                    yes21_price_entry.delete(0, tk.END)
+                    yes21_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 20",
+                        price=no_price,
+                        amount=float(no20_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"twenty_first_trade执行失败: {str(e)}")
+            self.update_status(f"twenty_first_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Twenty_Second_trade(self):
+        """第22次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes21和No21的价格输入框
+                yes21_price_entry = self.yes_frame.grid_slaves(row=42, column=1)[0]
+                no21_price_entry = self.no_frame.grid_slaves(row=42, column=1)[0]
+                yes21_target = float(yes21_price_entry.get())
+                no21_target = float(no21_price_entry.get())
+                
+                # 检查Yes21价格匹配
+                if abs(yes21_target - yes_price) < 0.0001 and yes21_target > 0:
+                    self.logger.info("Yes 21价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes21_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Second_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes21和No21价格为0.00
+                    yes21_price_entry.delete(0, tk.END)
+                    yes21_price_entry.insert(0, "0.00")
+                    no21_price_entry.delete(0, tk.END)
+                    no21_price_entry.insert(0, "0.00")
+                    
+                    # 设置No22价格
+                    no22_price_entry = self.no_frame.grid_slaves(row=44, column=1)[0]
+                    no22_price_entry.delete(0, tk.END)
+                    no22_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 21",
+                        price=yes_price,
+                        amount=float(yes21_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No21价格匹配
+                elif abs(no21_target - no_price) < 0.0001 and no21_target > 0:
+                    self.logger.info("No 21价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no21_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Second_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes21和No21价格为0.00
+                    yes21_price_entry.delete(0, tk.END)
+                    yes21_price_entry.insert(0, "0.00")
+                    no21_price_entry.delete(0, tk.END)
+                    no21_price_entry.insert(0, "0.00")
+                    
+                    # 设置Yes22价格
+                    yes22_price_entry = self.yes_frame.grid_slaves(row=44, column=1)[0]
+                    yes22_price_entry.delete(0, tk.END)
+                    yes22_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 21",
+                        price=no_price,
+                        amount=float(no21_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"twenty_second_trade执行失败: {str(e)}")
+            self.update_status(f"twenty_second_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Twenty_Third_trade(self):
+        """第23次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes22和No22的价格输入框
+                yes22_price_entry = self.yes_frame.grid_slaves(row=44, column=1)[0]
+                no22_price_entry = self.no_frame.grid_slaves(row=44, column=1)[0]
+                yes22_target = float(yes22_price_entry.get())
+                no22_target = float(no22_price_entry.get())
+                
+                # 检查Yes22价格匹配
+                if abs(yes22_target - yes_price) < 0.0001 and yes22_target > 0:
+                    self.logger.info("Yes 22价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes22_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Third_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes22和No22价格为0.00
+                    yes22_price_entry.delete(0, tk.END)
+                    yes22_price_entry.insert(0, "0.00")
+                    no22_price_entry.delete(0, tk.END)
+                    no22_price_entry.insert(0, "0.00")
+                    
+                    # 设置No23价格
+                    no23_price_entry = self.no_frame.grid_slaves(row=46, column=1)[0]
+                    no23_price_entry.delete(0, tk.END)
+                    no23_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 22",
+                        price=yes_price,
+                        amount=float(yes22_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No22价格匹配
+                elif abs(no22_target - no_price) < 0.0001 and no22_target > 0:
+                    self.logger.info("No 22价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no22_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Third_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes22和No22价格为0.00
+                    yes22_price_entry.delete(0, tk.END)
+                    yes22_price_entry.insert(0, "0.00")
+                    no22_price_entry.delete(0, tk.END)
+                    no22_price_entry.insert(0, "0.00")
+                    
+                    # 设置Yes23价格
+                    yes23_price_entry = self.yes_frame.grid_slaves(row=46, column=1)[0]
+                    yes23_price_entry.delete(0, tk.END)
+                    yes23_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 22",
+                        price=no_price,
+                        amount=float(no22_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"twenty_third_trade执行失败: {str(e)}")
+            self.update_status(f"twenty_third_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Twenty_Fourth_trade(self):
+        """第24次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes23和No23的价格输入框
+                yes23_price_entry = self.yes_frame.grid_slaves(row=46, column=1)[0]
+                no23_price_entry = self.no_frame.grid_slaves(row=46, column=1)[0]
+                yes23_target = float(yes23_price_entry.get())
+                no23_target = float(no23_price_entry.get())
+                
+                # 检查Yes23价格匹配
+                if abs(yes23_target - yes_price) < 0.0001 and yes23_target > 0:
+                    self.logger.info("Yes 23价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes23_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Fourth_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes23和No23价格为0.00
+                    yes23_price_entry.delete(0, tk.END)
+                    yes23_price_entry.insert(0, "0.00")
+                    no23_price_entry.delete(0, tk.END)
+                    no23_price_entry.insert(0, "0.00")
+                    
+                    # 设置Yes24价格
+                    yes24_price_entry = self.yes_frame.grid_slaves(row=48, column=1)[0]
+                    yes24_price_entry.delete(0, tk.END)
+                    yes24_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 23",
+                        price=yes_price,
+                        amount=float(yes23_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No23价格匹配
+                elif abs(no23_target - no_price) < 0.0001 and no23_target > 0:
+                    self.logger.info("No 23价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no23_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Fourth_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes23和No23价格为0.00
+                    yes23_price_entry.delete(0, tk.END)
+                    yes23_price_entry.insert(0, "0.00")
+                    no23_price_entry.delete(0, tk.END)
+                    no23_price_entry.insert(0, "0.00")
+                    
+                    # 设置Yes24价格
+                    yes24_price_entry = self.yes_frame.grid_slaves(row=48, column=1)[0]
+                    yes24_price_entry.delete(0, tk.END)
+                    yes24_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 23",
+                        price=no_price,
+                        amount=float(no23_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"twenty_fourth_trade执行失败: {str(e)}")
+            self.update_status(f"twenty_fourth_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Twenty_Fifth_trade(self):
+        """第25次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes24和No24的价格输入框
+                yes24_price_entry = self.yes_frame.grid_slaves(row=48, column=1)[0]
+                no24_price_entry = self.no_frame.grid_slaves(row=48, column=1)[0]
+                yes24_target = float(yes24_price_entry.get())
+                no24_target = float(no24_price_entry.get())
+                
+                # 检查Yes24价格匹配
+                if abs(yes24_target - yes_price) < 0.0001 and yes24_target > 0:
+                    self.logger.info("Yes 24价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes24_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Fifth_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes24和No24价格为0.00
+                    yes24_price_entry.delete(0, tk.END)
+                    yes24_price_entry.insert(0, "0.00")
+                    no24_price_entry.delete(0, tk.END)
+                    no24_price_entry.insert(0, "0.00")
+                    
+                    # 设置No25价格
+                    no25_price_entry = self.no_frame.grid_slaves(row=50, column=1)[0]
+                    no25_price_entry.delete(0, tk.END)
+                    no25_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 24",
+                        price=yes_price,
+                        amount=float(yes24_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No24价格匹配
+                elif abs(no24_target - no_price) < 0.0001 and no24_target > 0:
+                    self.logger.info("No 24价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no24_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Fifth_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes24和No24价格为0.00
+                    yes24_price_entry.delete(0, tk.END)
+                    yes24_price_entry.insert(0, "0.00")
+                    no24_price_entry.delete(0, tk.END)
+                    no24_price_entry.insert(0, "0.00")
+                    
+                    # 设置Yes25价格
+                    yes25_price_entry = self.yes_frame.grid_slaves(row=50, column=1)[0]
+                    yes25_price_entry.delete(0, tk.END)
+                    yes25_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 24",
+                        price=no_price,
+                        amount=float(no24_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"twenty_fifth_trade执行失败: {str(e)}")
+            self.update_status(f"twenty_fifth_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Twenty_Sixth_trade(self):
+        """第26次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes25和No25的价格输入框
+                yes25_price_entry = self.yes_frame.grid_slaves(row=50, column=1)[0]
+                no25_price_entry = self.no_frame.grid_slaves(row=50, column=1)[0]
+                yes25_target = float(yes25_price_entry.get())
+                no25_target = float(no25_price_entry.get())
+                
+                # 检查Yes25价格匹配
+                if abs(yes25_target - yes_price) < 0.0001 and yes25_target > 0:
+                    self.logger.info("Yes 25价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes25_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Sixth_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes25和No25价格为0.00
+                    yes25_price_entry.delete(0, tk.END)
+                    yes25_price_entry.insert(0, "0.00")
+                    no25_price_entry.delete(0, tk.END)
+                    no25_price_entry.insert(0, "0.00")
+                    
+                    # 设置No26价格
+                    no26_price_entry = self.no_frame.grid_slaves(row=52, column=1)[0]
+                    no26_price_entry.delete(0, tk.END)
+                    no26_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 25",
+                        price=yes_price,
+                        amount=float(yes25_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No25价格匹配
+                elif abs(no25_target - no_price) < 0.0001 and no25_target > 0:
+                    self.logger.info("No 25价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no25_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Sixth_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes25和No25价格为0.00
+                    yes25_price_entry.delete(0, tk.END)
+                    yes25_price_entry.insert(0, "0.00")
+                    no25_price_entry.delete(0, tk.END)
+                    no25_price_entry.insert(0, "0.00")
+                    
+                    # 设置Yes26价格
+                    yes26_price_entry = self.yes_frame.grid_slaves(row=52, column=1)[0]
+                    yes26_price_entry.delete(0, tk.END)
+                    yes26_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 25",
+                        price=no_price,
+                        amount=float(no25_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"twenty_sixth_trade执行失败: {str(e)}")
+            self.update_status(f"twenty_sixth_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Twenty_Seventh_trade(self):
+        """第27次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes26和No26的价格输入框
+                yes26_price_entry = self.yes_frame.grid_slaves(row=52, column=1)[0]
+                no26_price_entry = self.no_frame.grid_slaves(row=52, column=1)[0]
+                yes26_target = float(yes26_price_entry.get())
+                no26_target = float(no26_price_entry.get())
+                
+                # 检查Yes26价格匹配
+                if abs(yes26_target - yes_price) < 0.0001 and yes26_target > 0:
+                    self.logger.info("Yes 26价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes26_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Seventh_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes26和No26价格为0.00
+                    yes26_price_entry.delete(0, tk.END)
+                    yes26_price_entry.insert(0, "0.00")
+                    no26_price_entry.delete(0, tk.END)
+                    no26_price_entry.insert(0, "0.00")
+                    
+                    # 设置No27价格
+                    no27_price_entry = self.no_frame.grid_slaves(row=54, column=1)[0]
+                    no27_price_entry.delete(0, tk.END)
+                    no27_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 26",
+                        price=yes_price,
+                        amount=float(yes26_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No26价格匹配
+                elif abs(no26_target - no_price) < 0.0001 and no26_target > 0:
+                    self.logger.info("No 26价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no26_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Seventh_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes26和No26价格为0.00
+                    yes26_price_entry.delete(0, tk.END)
+                    yes26_price_entry.insert(0, "0.00")
+                    no26_price_entry.delete(0, tk.END)
+                    no26_price_entry.insert(0, "0.00")
+                    
+                    # 设置Yes27价格
+                    yes27_price_entry = self.yes_frame.grid_slaves(row=54, column=1)[0]
+                    yes27_price_entry.delete(0, tk.END)
+                    yes27_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 26",
+                        price=no_price,
+                        amount=float(no26_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"twenty_seventh_trade执行失败: {str(e)}")
+            self.update_status(f"twenty_seventh_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Twenty_Eighth_trade(self):
+        """第28次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes27和No27的价格输入框
+                yes27_price_entry = self.yes_frame.grid_slaves(row=54, column=1)[0]
+                no27_price_entry = self.no_frame.grid_slaves(row=54, column=1)[0]
+                yes27_target = float(yes27_price_entry.get())
+                no27_target = float(no27_price_entry.get())
+                
+                # 检查Yes27价格匹配
+                if abs(yes27_target - yes_price) < 0.0001 and yes27_target > 0:
+                    self.logger.info("Yes 27价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes27_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Eighth_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes27和No27价格为0.00
+                    yes27_price_entry.delete(0, tk.END)
+                    yes27_price_entry.insert(0, "0.00")
+                    no27_price_entry.delete(0, tk.END)
+                    no27_price_entry.insert(0, "0.00")
+                    
+                    # 设置No28价格
+                    no28_price_entry = self.no_frame.grid_slaves(row=56, column=1)[0]
+                    no28_price_entry.delete(0, tk.END)
+                    no28_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 27",
+                        price=yes_price,
+                        amount=float(yes27_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No27价格匹配
+                elif abs(no27_target - no_price) < 0.0001 and no27_target > 0:
+                    self.logger.info("No 27价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no27_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Eighth_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes27和No27价格为0.00
+                    yes27_price_entry.delete(0, tk.END)
+                    yes27_price_entry.insert(0, "0.00")
+                    no27_price_entry.delete(0, tk.END)
+                    no27_price_entry.insert(0, "0.00")
+                    
+                    # 设置Yes28价格
+                    yes28_price_entry = self.yes_frame.grid_slaves(row=56, column=1)[0]
+                    yes28_price_entry.delete(0, tk.END)
+                    yes28_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 27",
+                        price=no_price,
+                        amount=float(no27_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"twenty_eighth_trade执行失败: {str(e)}")
+            self.update_status(f"twenty_eighth_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Twenty_Ninth_trade(self):
+        """第29次交易"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes28和No28的价格输入框
+                yes28_price_entry = self.yes_frame.grid_slaves(row=56, column=1)[0]
+                no28_price_entry = self.no_frame.grid_slaves(row=56, column=1)[0]
+                yes28_target = float(yes28_price_entry.get())
+                no28_target = float(no28_price_entry.get())
+                
+                # 检查Yes28价格匹配
+                if abs(yes28_target - yes_price) < 0.0001 and yes28_target > 0:
+                    self.logger.info("Yes 28价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes28_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Ninth_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes28和No28价格为0.00
+                    yes28_price_entry.delete(0, tk.END)
+                    yes28_price_entry.insert(0, "0.00")
+                    no28_price_entry.delete(0, tk.END)
+                    no28_price_entry.insert(0, "0.00")
+                    
+                    # 设置No29价格
+                    no29_price_entry = self.no_frame.grid_slaves(row=58, column=1)[0]
+                    no29_price_entry.delete(0, tk.END)
+                    no29_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 28",
+                        price=yes_price,
+                        amount=float(yes28_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No28价格匹配
+                elif abs(no28_target - no_price) < 0.0001 and no28_target > 0:
+                    self.logger.info("No 28价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no28_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Twenty_Ninth_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes28和No28价格为0.00
+                    yes28_price_entry.delete(0, tk.END)
+                    yes28_price_entry.insert(0, "0.00")
+                    no28_price_entry.delete(0, tk.END)
+                    no28_price_entry.insert(0, "0.00")
+                    
+                    # 设置Yes29价格
+                    yes29_price_entry = self.yes_frame.grid_slaves(row=58, column=1)[0]
+                    yes29_price_entry.delete(0, tk.END)
+                    yes29_price_entry.insert(0, "0.53")
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 28",
+                        price=no_price,
+                        amount=float(no28_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"twenty_ninth_trade执行失败: {str(e)}")
+            self.update_status(f"twenty_ninth_trade执行失败: {str(e)}")
+        finally:
+            self.is_trading = False
+
+    def Thirtieth_trade(self):
+        """第30次交易(最后一次交易)"""
+        try:
+            self.is_trading = True
+            if not self.driver:
+                raise Exception("浏览器连接丢失")
+                
+            prices = self.driver.execute_script("""
+                function getPrices() {
+                    const prices = {yes: null, no: null};
+                    const elements = document.getElementsByTagName('span');
+                    
+                    for (let el of elements) {
+                        const text = el.textContent.trim();
+                        if (text.includes('Yes') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.yes = parseFloat(match[1]);
+                        }
+                        if (text.includes('No') && text.includes('¢')) {
+                            const match = text.match(/(\\d+\\.?\\d*)¢/);
+                            if (match) prices.no = parseFloat(match[1]);
+                        }
+                    }
+                    return prices;
+                }
+                return getPrices();
+            """)
+                
+            if prices['yes'] is not None and prices['no'] is not None:
+                yes_price = float(prices['yes']) / 100
+                no_price = float(prices['no']) / 100
+                
+                # 获取Yes29和No29的价格输入框
+                yes29_price_entry = self.yes_frame.grid_slaves(row=58, column=1)[0]
+                no29_price_entry = self.no_frame.grid_slaves(row=58, column=1)[0]
+                yes29_target = float(yes29_price_entry.get())
+                no29_target = float(no29_price_entry.get())
+                
+                # 检查Yes29价格匹配
+                if abs(yes29_target - yes_price) < 0.0001 and yes29_target > 0:
+                    self.logger.info("Yes 29价格匹配，执行自动交易")
+                    self.buy_yes_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_yes29_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Thirtieth_trade")
+                    self.only_sell_no()
+                    
+                    # 重置Yes29和No29价格为0.00
+                    yes29_price_entry.delete(0, tk.END)
+                    yes29_price_entry.insert(0, "0.00")
+                    no29_price_entry.delete(0, tk.END)
+                    no29_price_entry.insert(0, "0.00")
+                    
+                    # 最后一次交易不需要设置下一次价格
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy Yes 29",
+                        price=yes_price,
+                        amount=float(yes29_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+                # 检查No29价格匹配
+                elif abs(no29_target - no_price) < 0.0001 and no29_target > 0:
+                    self.logger.info("No 29价格匹配，执行自动交易")
+                    self.buy_no_button.invoke()
+                    time.sleep(0.5)
+                    self.amount_no29_button.event_generate('<Button-1>')
+                    time.sleep(0.5)
+                    self.buy_confirm_button.invoke()
+                    time.sleep(1)
+                    self._handle_metamask_popup()
+                    self.sleep_refresh("Thirtieth_trade")
+                    self.only_sell_yes()
+                    
+                    # 重置Yes29和No29价格为0.00
+                    yes29_price_entry.delete(0, tk.END)
+                    yes29_price_entry.insert(0, "0.00")
+                    no29_price_entry.delete(0, tk.END)
+                    no29_price_entry.insert(0, "0.00")
+                    
+                    # 最后一次交易不需要设置下一次价格
+                    
+                    self.trade_count += 1
+                    self.send_trade_email(
+                        trade_type="Buy No 29",
+                        price=no_price,
+                        amount=float(no29_price_entry.get()),
+                        trade_count=self.trade_count
+                    )
+                
+        except ValueError as e:
+            self.logger.error(f"价格转换错误: {str(e)}")
+        except Exception as e:
+            self.logger.error(f"thirtieth_trade执行失败: {str(e)}")
+            self.update_status(f"thirtieth_trade执行失败: {str(e)}")
         finally:
             self.is_trading = False
 
@@ -3429,7 +5595,7 @@ class CryptoTrader:
                     self.sleep_refresh("Sell_yes")
                     
                     # 重置所有价格
-                    for i in range(15):  # 0-14
+                    for i in range(31):  # 0-30
                         yes_entry = getattr(self, f'yes{i}_price_entry', None)
                         no_entry = getattr(self, f'no{i}_price_entry', None)
                         if yes_entry:
@@ -3507,7 +5673,7 @@ class CryptoTrader:
                     self.sleep_refresh("Sell_no")
 
                     # 重置所有价格
-                    for i in range(15):  # 0-14
+                    for i in range(31):  # 0-30
                         yes_entry = getattr(self, f'yes{i}_price_entry', None)
                         no_entry = getattr(self, f'no{i}_price_entry', None)
                         if yes_entry:
@@ -3769,8 +5935,7 @@ class CryptoTrader:
             time.sleep(0.3)
             
             self.logger.info("登录操作完成")
-            return True
-            
+            return True   
         except Exception as e:
             self.logger.error(f"登录操作失败: {str(e)}")
             return False
@@ -3782,3 +5947,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"程序启动错误: {str(e)}")
         sys.exit(1) 
+    
