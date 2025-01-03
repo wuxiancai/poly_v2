@@ -128,7 +128,7 @@ class CryptoTrader:
             default_config = {
                 'website': {'url': ''},
                 'trading': {
-                    'Yes0': {'target_price': 0.53, 'amount': 0.0},
+                    'Yes0': {'target_price': 0.52, 'amount': 0.0},
                     'Yes1': {'target_price': 0.00, 'amount': 0.0},
                     'Yes2': {'target_price': 0.00, 'amount': 0.0},
                     'Yes3': {'target_price': 0.00, 'amount': 0.0},
@@ -159,7 +159,7 @@ class CryptoTrader:
                     'Yes28': {'target_price': 0.00, 'amount': 0.0},
                     'Yes29': {'target_price': 0.00, 'amount': 0.0},
                     'Yes30': {'target_price': 0.00, 'amount': 0.0},
-                    'No0': {'target_price': 0.53, 'amount': 0.0},
+                    'No0': {'target_price': 0.52, 'amount': 0.0},
                     'No1': {'target_price': 0.00, 'amount': 0.0},
                     'No2': {'target_price': 0.00, 'amount': 0.0},
                     'No3': {'target_price': 0.00, 'amount': 0.0},
