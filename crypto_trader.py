@@ -72,7 +72,6 @@ class Logger:
     def critical(self, message):
         self.logger.critical(message)
 
-
 class CryptoTrader:
     def __init__(self):
         super().__init__()
@@ -87,7 +86,7 @@ class CryptoTrader:
         self.is_trading = False  # 添加交易状态标志
         self.refresh_interval = 300000  # 5分钟 = 300000毫秒
         self.refresh_timer = None  # 用于存储定时器ID
-        
+        self.default_target_price = 0.52
         try:
             self.config = self.load_config()
             self.setup_gui()
@@ -105,7 +104,6 @@ class CryptoTrader:
             sys.exit(1)
         
         # 检查是否是重启
-        import sys
         self.is_restart = '--restart' in sys.argv
         
         # 如果是重启,延迟2秒后自动点击开始监控
@@ -261,7 +259,7 @@ class CryptoTrader:
 
     def setup_gui(self):
         self.root = tk.Tk()
-        self.root.title("Polymarket 30 次自动交易")
+        self.root.title("Polymarket 14 次自动交易，11%利润率！")
         # 创建主滚动框架
         main_canvas = tk.Canvas(self.root)
         scrollbar = ttk.Scrollbar(self.root, orient="vertical", command=main_canvas.yview)
@@ -310,7 +308,12 @@ class CryptoTrader:
         # 放置滚动组件
         main_canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
-        
+
+        # 创建红色粗体样式
+        style = ttk.Style()
+        style.configure('Red.TButton', foreground='red', font=('TkDefaultFont', 14, 'bold'))
+        style.configure('Black.TButton', foreground='black', font=('TkDefaultFont', 14, 'normal'))
+ 
         # 金额设置框架
         amount_settings_frame = ttk.LabelFrame(scrollable_frame, text="金额设置", padding=(5, 5))
         amount_settings_frame.pack(fill="x", padx=5, pady=5)
@@ -321,28 +324,76 @@ class CryptoTrader:
         
         # 初始金额设置
         ttk.Label(settings_container, text="初始金额(%):").grid(row=0, column=0, padx=5, pady=5)
-        self.initial_amount_entry = ttk.Entry(settings_container, width=10)
+        self.initial_amount_entry = ttk.Entry(settings_container, width=5)
         self.initial_amount_entry.insert(0, "9")
         self.initial_amount_entry.grid(row=0, column=1, padx=5, pady=5)
         
         # 反水一次设置
         ttk.Label(settings_container, text="反水一次(%):").grid(row=0, column=2, padx=5, pady=5)
-        self.first_rebound_entry = ttk.Entry(settings_container, width=10)
+        self.first_rebound_entry = ttk.Entry(settings_container, width=5)
         self.first_rebound_entry.insert(0, "150")
         self.first_rebound_entry.grid(row=0, column=3, padx=5, pady=5)
         
         # 反水N次设置
         ttk.Label(settings_container, text="反水N次(%):").grid(row=0, column=4, padx=5, pady=5)
-        self.n_rebound_entry = ttk.Entry(settings_container, width=10)
+        self.n_rebound_entry = ttk.Entry(settings_container, width=5)
         self.n_rebound_entry.insert(0, "113")
         self.n_rebound_entry.grid(row=0, column=5, padx=5, pady=5)
+
+        # 利润率设置
+        ttk.Label(settings_container, text="利润率(%):").grid(row=0, column=6, padx=5, pady=5)
+        self.profit_rate_entry = ttk.Entry(settings_container, width=5)
+        self.profit_rate_entry.insert(0, "11")
+        self.profit_rate_entry.grid(row=0, column=7, padx=5, pady=5)
+
+        # 交易次数
+        ttk.Label(settings_container, text="交易次数:").grid(row=1, column=0, padx=5, pady=5)
+
+        # 次数按钮
+        self.trade_buttons = {}  # 保存按钮引用
         
+        # 10按钮
+        self.trade_buttons["10"] = ttk.Button(settings_container, text="10", width=5, 
+                                            command=lambda: self.set_amount_values("10"),
+                                            style='Black.TButton')
+        self.trade_buttons["10"].grid(row=1, column=1, padx=3, pady=3)
+        
+        # 12按钮
+        self.trade_buttons["12"] = ttk.Button(settings_container, text="12", width=5, 
+                                            command=lambda: self.set_amount_values("12"),
+                                            style='Black.TButton')
+        self.trade_buttons["12"].grid(row=1, column=2, padx=3, pady=3)
+        
+        # 16按钮
+        self.trade_buttons["16"] = ttk.Button(settings_container, text="16", width=5, 
+                                            command=lambda: self.set_amount_values("16"),
+                                            style='Black.TButton')
+        self.trade_buttons["16"].grid(row=1, column=3, padx=3, pady=3)
+        
+        # 18按钮
+        self.trade_buttons["18"] = ttk.Button(settings_container, text="18", width=5, 
+                                            command=lambda: self.set_amount_values("18"),
+                                            style='Black.TButton')
+        self.trade_buttons["18"].grid(row=1, column=4, padx=3, pady=3)
+        
+        # 20按钮
+        self.trade_buttons["20"] = ttk.Button(settings_container, text="20", width=5, 
+                                            command=lambda: self.set_amount_values("20"),
+                                            style='Black.TButton')
+        self.trade_buttons["20"].grid(row=1, column=5, padx=3, pady=3)
+        
+        # 22按钮
+        self.trade_buttons["22"] = ttk.Button(settings_container, text="22", width=5, 
+                                            command=lambda: self.set_amount_values("22"),
+                                            style='Black.TButton')
+        self.trade_buttons["22"].grid(row=1, column=6, padx=3, pady=3)
+
         # 配置列权重使输入框均匀分布
-        for i in range(6):
+        for i in range(8):
             settings_container.grid_columnconfigure(i, weight=1)
         # 设置窗口大小和位置
         window_width = 800
-        window_height = 1200
+        window_height = 900
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         x = (screen_width - window_width) // 2
@@ -396,6 +447,18 @@ class CryptoTrader:
                                              style='Black.TButton')  # 默认使用黑色文字
         self.update_amount_button.pack(side=tk.LEFT, padx=5)
         self.update_amount_button['state'] = 'disabled'  # 初始禁用
+
+        # 添加价格按钮
+        prices = ['0.51', '0.52', '0.53', '0.54']
+        for price in prices:
+            btn = ttk.Button(
+                button_frame, 
+                text=price,
+                width=4,
+                command=lambda p=price: self.set_default_price(p),
+                style='Black.TButton'
+            )
+            btn.pack(side=tk.LEFT, padx=2)
         
         # 交易币对显示区域
         pair_frame = ttk.Frame(scrollable_frame)
@@ -478,65 +541,65 @@ class CryptoTrader:
         self.yes_amount_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 
         # 直接创建所有Yes Entry对象并设置默认值
-        self.yes1_price_entry = ttk.Entry(self.yes_frame)
+        self.yes1_price_entry = tk.Entry(self.yes_frame)
         self.yes1_price_entry.insert(0, "0.00")
-        self.yes2_price_entry = ttk.Entry(self.yes_frame)
+        self.yes2_price_entry = tk.Entry(self.yes_frame)
         self.yes2_price_entry.insert(0, "0.00")
-        self.yes3_price_entry = ttk.Entry(self.yes_frame)
+        self.yes3_price_entry = tk.Entry(self.yes_frame)
         self.yes3_price_entry.insert(0, "0.00")
-        self.yes4_price_entry = ttk.Entry(self.yes_frame)
+        self.yes4_price_entry = tk.Entry(self.yes_frame)
         self.yes4_price_entry.insert(0, "0.00")
-        self.yes5_price_entry = ttk.Entry(self.yes_frame)
+        self.yes5_price_entry = tk.Entry(self.yes_frame)
         self.yes5_price_entry.insert(0, "0.00")
-        self.yes6_price_entry = ttk.Entry(self.yes_frame)
+        self.yes6_price_entry = tk.Entry(self.yes_frame)
         self.yes6_price_entry.insert(0, "0.00")
-        self.yes7_price_entry = ttk.Entry(self.yes_frame)
+        self.yes7_price_entry = tk.Entry(self.yes_frame)
         self.yes7_price_entry.insert(0, "0.00")
-        self.yes8_price_entry = ttk.Entry(self.yes_frame)
+        self.yes8_price_entry = tk.Entry(self.yes_frame)
         self.yes8_price_entry.insert(0, "0.00")
-        self.yes9_price_entry = ttk.Entry(self.yes_frame)
+        self.yes9_price_entry = tk.Entry(self.yes_frame)
         self.yes9_price_entry.insert(0, "0.00")
-        self.yes10_price_entry = ttk.Entry(self.yes_frame)
+        self.yes10_price_entry = tk.Entry(self.yes_frame)
         self.yes10_price_entry.insert(0, "0.00")
-        self.yes11_price_entry = ttk.Entry(self.yes_frame)
+        self.yes11_price_entry = tk.Entry(self.yes_frame)
         self.yes11_price_entry.insert(0, "0.00")
-        self.yes12_price_entry = ttk.Entry(self.yes_frame)
+        self.yes12_price_entry = tk.Entry(self.yes_frame)
         self.yes12_price_entry.insert(0, "0.00")
-        self.yes13_price_entry = ttk.Entry(self.yes_frame)
+        self.yes13_price_entry = tk.Entry(self.yes_frame)
         self.yes13_price_entry.insert(0, "0.00")
-        self.yes14_price_entry = ttk.Entry(self.yes_frame)
+        self.yes14_price_entry = tk.Entry(self.yes_frame)
         self.yes14_price_entry.insert(0, "0.00")
-        self.yes15_price_entry = ttk.Entry(self.yes_frame)
+        self.yes15_price_entry = tk.Entry(self.yes_frame)
         self.yes15_price_entry.insert(0, "0.00")
-        self.yes16_price_entry = ttk.Entry(self.yes_frame)
+        self.yes16_price_entry = tk.Entry(self.yes_frame)
         self.yes16_price_entry.insert(0, "0.00")
-        self.yes17_price_entry = ttk.Entry(self.yes_frame)
+        self.yes17_price_entry = tk.Entry(self.yes_frame)
         self.yes17_price_entry.insert(0, "0.00")
-        self.yes18_price_entry = ttk.Entry(self.yes_frame)
+        self.yes18_price_entry = tk.Entry(self.yes_frame)
         self.yes18_price_entry.insert(0, "0.00")
-        self.yes19_price_entry = ttk.Entry(self.yes_frame)
+        self.yes19_price_entry = tk.Entry(self.yes_frame)
         self.yes19_price_entry.insert(0, "0.00")
-        self.yes20_price_entry = ttk.Entry(self.yes_frame)
+        self.yes20_price_entry = tk.Entry(self.yes_frame)
         self.yes20_price_entry.insert(0, "0.00")
-        self.yes21_price_entry = ttk.Entry(self.yes_frame)
+        self.yes21_price_entry = tk.Entry(self.yes_frame)
         self.yes21_price_entry.insert(0, "0.00")
-        self.yes22_price_entry = ttk.Entry(self.yes_frame)
+        self.yes22_price_entry = tk.Entry(self.yes_frame)
         self.yes22_price_entry.insert(0, "0.00")
-        self.yes23_price_entry = ttk.Entry(self.yes_frame)
+        self.yes23_price_entry = tk.Entry(self.yes_frame)
         self.yes23_price_entry.insert(0, "0.00")
-        self.yes24_price_entry = ttk.Entry(self.yes_frame)
+        self.yes24_price_entry = tk.Entry(self.yes_frame)
         self.yes24_price_entry.insert(0, "0.00")
-        self.yes25_price_entry = ttk.Entry(self.yes_frame)
+        self.yes25_price_entry = tk.Entry(self.yes_frame)
         self.yes25_price_entry.insert(0, "0.00")
-        self.yes26_price_entry = ttk.Entry(self.yes_frame)
+        self.yes26_price_entry = tk.Entry(self.yes_frame)
         self.yes26_price_entry.insert(0, "0.00")
-        self.yes27_price_entry = ttk.Entry(self.yes_frame)
+        self.yes27_price_entry = tk.Entry(self.yes_frame)
         self.yes27_price_entry.insert(0, "0.00")
-        self.yes28_price_entry = ttk.Entry(self.yes_frame)
+        self.yes28_price_entry = tk.Entry(self.yes_frame)
         self.yes28_price_entry.insert(0, "0.00")
-        self.yes29_price_entry = ttk.Entry(self.yes_frame)
+        self.yes29_price_entry = tk.Entry(self.yes_frame)
         self.yes29_price_entry.insert(0, "0.00")
-        self.yes30_price_entry = ttk.Entry(self.yes_frame)
+        self.yes30_price_entry = tk.Entry(self.yes_frame)
         self.yes30_price_entry.insert(0, "0.00")
         # 设置它们的grid布局
         self.yes1_price_entry.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
@@ -612,65 +675,65 @@ class CryptoTrader:
         self.no_amount_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 
         # 直接创建所有No Entry对象并设置默认值
-        self.no1_price_entry = ttk.Entry(self.no_frame)
+        self.no1_price_entry = tk.Entry(self.no_frame)
         self.no1_price_entry.insert(0, "0.00")
-        self.no2_price_entry = ttk.Entry(self.no_frame)
+        self.no2_price_entry = tk.Entry(self.no_frame)
         self.no2_price_entry.insert(0, "0.00")
-        self.no3_price_entry = ttk.Entry(self.no_frame)
+        self.no3_price_entry = tk.Entry(self.no_frame)
         self.no3_price_entry.insert(0, "0.00")
-        self.no4_price_entry = ttk.Entry(self.no_frame)
+        self.no4_price_entry = tk.Entry(self.no_frame)
         self.no4_price_entry.insert(0, "0.00")
-        self.no5_price_entry = ttk.Entry(self.no_frame)
+        self.no5_price_entry = tk.Entry(self.no_frame)
         self.no5_price_entry.insert(0, "0.00")
-        self.no6_price_entry = ttk.Entry(self.no_frame)
+        self.no6_price_entry = tk.Entry(self.no_frame) 
         self.no6_price_entry.insert(0, "0.00")
-        self.no7_price_entry = ttk.Entry(self.no_frame)
+        self.no7_price_entry = tk.Entry(self.no_frame)
         self.no7_price_entry.insert(0, "0.00")
-        self.no8_price_entry = ttk.Entry(self.no_frame)
+        self.no8_price_entry = tk.Entry(self.no_frame)
         self.no8_price_entry.insert(0, "0.00")
-        self.no9_price_entry = ttk.Entry(self.no_frame)
+        self.no9_price_entry = tk.Entry(self.no_frame)
         self.no9_price_entry.insert(0, "0.00")
-        self.no10_price_entry = ttk.Entry(self.no_frame)
+        self.no10_price_entry = tk.Entry(self.no_frame)
         self.no10_price_entry.insert(0, "0.00")
-        self.no11_price_entry = ttk.Entry(self.no_frame)
+        self.no11_price_entry = tk.Entry(self.no_frame)
         self.no11_price_entry.insert(0, "0.00")
-        self.no12_price_entry = ttk.Entry(self.no_frame)
+        self.no12_price_entry = tk.Entry(self.no_frame)
         self.no12_price_entry.insert(0, "0.00")
-        self.no13_price_entry = ttk.Entry(self.no_frame)
+        self.no13_price_entry = tk.Entry(self.no_frame)
         self.no13_price_entry.insert(0, "0.00")
-        self.no14_price_entry = ttk.Entry(self.no_frame)
+        self.no14_price_entry = tk.Entry(self.no_frame)
         self.no14_price_entry.insert(0, "0.00")
-        self.no15_price_entry = ttk.Entry(self.no_frame)
+        self.no15_price_entry = tk.Entry(self.no_frame)
         self.no15_price_entry.insert(0, "0.00")
-        self.no16_price_entry = ttk.Entry(self.no_frame)
+        self.no16_price_entry = tk.Entry(self.no_frame)
         self.no16_price_entry.insert(0, "0.00")
-        self.no17_price_entry = ttk.Entry(self.no_frame)
+        self.no17_price_entry = tk.Entry(self.no_frame)
         self.no17_price_entry.insert(0, "0.00")
-        self.no18_price_entry = ttk.Entry(self.no_frame)
+        self.no18_price_entry = tk.Entry(self.no_frame)
         self.no18_price_entry.insert(0, "0.00")
-        self.no19_price_entry = ttk.Entry(self.no_frame)
+        self.no19_price_entry = tk.Entry(self.no_frame)
         self.no19_price_entry.insert(0, "0.00")
-        self.no20_price_entry = ttk.Entry(self.no_frame)
+        self.no20_price_entry = tk.Entry(self.no_frame)
         self.no20_price_entry.insert(0, "0.00")
-        self.no21_price_entry = ttk.Entry(self.no_frame)
+        self.no21_price_entry = tk.Entry(self.no_frame)
         self.no21_price_entry.insert(0, "0.00")
-        self.no22_price_entry = ttk.Entry(self.no_frame)
+        self.no22_price_entry = tk.Entry(self.no_frame)
         self.no22_price_entry.insert(0, "0.00")
-        self.no23_price_entry = ttk.Entry(self.no_frame)
+        self.no23_price_entry = tk.Entry(self.no_frame)
         self.no23_price_entry.insert(0, "0.00")
-        self.no24_price_entry = ttk.Entry(self.no_frame)
+        self.no24_price_entry = tk.Entry(self.no_frame)
         self.no24_price_entry.insert(0, "0.00")
-        self.no25_price_entry = ttk.Entry(self.no_frame)
+        self.no25_price_entry = tk.Entry(self.no_frame)
         self.no25_price_entry.insert(0, "0.00")
-        self.no26_price_entry = ttk.Entry(self.no_frame)
+        self.no26_price_entry = tk.Entry(self.no_frame)
         self.no26_price_entry.insert(0, "0.00")
-        self.no27_price_entry = ttk.Entry(self.no_frame)
+        self.no27_price_entry = tk.Entry(self.no_frame)
         self.no27_price_entry.insert(0, "0.00")
-        self.no28_price_entry = ttk.Entry(self.no_frame)
+        self.no28_price_entry = tk.Entry(self.no_frame)
         self.no28_price_entry.insert(0, "0.00")
-        self.no29_price_entry = ttk.Entry(self.no_frame)
+        self.no29_price_entry = tk.Entry(self.no_frame)
         self.no29_price_entry.insert(0, "0.00")
-        self.no30_price_entry = ttk.Entry(self.no_frame)
+        self.no30_price_entry = tk.Entry(self.no_frame)
         self.no30_price_entry.insert(0, "0.00")
         # 设置它们的grid布局
         self.no1_price_entry.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
@@ -1758,8 +1821,9 @@ class CryptoTrader:
                 # 尝试获取第二行NO的标签值，如果不存在会直接进入except块
                 second_position = WebDriverWait(self.driver, 2).until(  # 缩短等待时间到2秒
                     EC.presence_of_element_located((By.XPATH, 
-                        '//*[@id="event-layout-with-side-nav"]/div[1]/div/div/div[2]/div/div[2]/div/div[2]/table/tbody/tr[1]/td[6]/div/button'))
+                        '//div[@class="c-dhzjXW c-chKWaB c-chKWaB-eVTycx-color-green c-dhzjXW-ibxvuTL-css" and text()="No"]'))
                 )
+                position_value = second_position.text
             except:
                 # 如果获取第二行失败，不报错，继续执行
                 pass
@@ -1902,7 +1966,7 @@ class CryptoTrader:
         """点击 Buy-No 按钮"""
         try:
             if not self.driver:
-                self.update_status("请先连接浏器")
+                self.update_status("请先连接浏览器")
                 return
             button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, 
@@ -2156,7 +2220,7 @@ class CryptoTrader:
         except Exception as e:
             self.logger.error(f"Amount操作失败: {str(e)}")
             self.update_status(f"Amount操作失败: {str(e)}")
-
+        
     def First_trade(self):
         """处理Yes0/No0的自动交易"""
         try:
@@ -2204,37 +2268,40 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("First_trade")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy Yes 0",
-                        price=yes_price,
-                        amount=float(self.yes_amount_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy Yes 0",
+                            price=yes_price,
+                            amount=float(self.yes_amount_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                        # 重置Yes0和No0价格为0.00
+                        self.yes_price_entry.delete(0, tk.END)
+                        self.yes_price_entry.insert(0, "0.00")
+                        self.no_price_entry.delete(0, tk.END)
+                        self.no_price_entry.insert(0, "0.00")
+                            
+                        # 设置No1价格为0.53
+                        no1_price_entry = self.no_frame.grid_slaves(row=2, column=1)[0]
+                        no1_price_entry.delete(0, tk.END)
+                        no1_price_entry.insert(0, str(self.default_target_price))
+                        no1_price_entry.configure(fg='red')  # 添加红色设置
+                        # 设置 Yes30和No30价格为0.99
+                        yes30_price_entry = self.yes_frame.grid_slaves(row=60, column=1)[0]
+                        yes30_price_entry.delete(0, tk.END)
+                        yes30_price_entry.insert(0, "0.99")
+                        yes30_price_entry.configure(fg='red')  # 添加红色设置
+                        no30_price_entry = self.no_frame.grid_slaves(row=60, column=1)[0]
+                        no30_price_entry.delete(0, tk.END)
+                        no30_price_entry.insert(0, "0.99")
+                        no30_price_entry.configure(fg='red')  # 添加红色设置
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.First_trade()
 
-                    # 重置Yes0和No0价格为0.00
-                    self.yes_price_entry.delete(0, tk.END)
-                    self.yes_price_entry.insert(0, "0.00")
-                    self.no_price_entry.delete(0, tk.END)
-                    self.no_price_entry.insert(0, "0.00")
-                    
-                    # 设置No1价格为0.53
-                    no1_price_entry = self.no_frame.grid_slaves(row=2, column=1)[0]
-                    no1_price_entry.delete(0, tk.END)
-                    no1_price_entry.insert(0, "0.53")
-                    # 设置 Yes30和No30价格为0.99
-                    yes30_price_entry = self.yes_frame.grid_slaves(row=62, column=1)[0]
-                    yes30_price_entry.delete(0, tk.END)
-                    yes30_price_entry.insert(0, "0.99")
-                    no30_price_entry = self.no_frame.grid_slaves(row=62, column=1)[0]
-                    no30_price_entry.delete(0, tk.END)
-                    no30_price_entry.insert(0, "0.99")
-                    # 增加等待 1秒
-                    time.sleep(1)
-                    
                 # 检查No0价格匹配
                 elif abs(no0_target - no_price) < 0.0001 and no0_target > 0:
                     self.logger.info("No 0价格匹配，执行自动交易") 
@@ -2248,36 +2315,40 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("First_trade")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy No 0",
-                        price=no_price,
-                        amount=float(self.no_amount_entry.get()),
-                        trade_count=self.trade_count
-                    )
-                    
-                    # 重置Yes0和No0价格为0.00
-                    self.yes_price_entry.delete(0, tk.END)
-                    self.yes_price_entry.insert(0, "0.00")
-                    self.no_price_entry.delete(0, tk.END)
-                    self.no_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes1价格为0.53
-                    yes1_price_entry = self.yes_frame.grid_slaves(row=2, column=1)[0]
-                    yes1_price_entry.delete(0, tk.END)
-                    yes1_price_entry.insert(0, "0.53")
-                    # 设置 Yes30和No30价格为0.99
-                    yes30_price_entry = self.yes_frame.grid_slaves(row=62, column=1)[0]
-                    yes30_price_entry.delete(0, tk.END)
-                    yes30_price_entry.insert(0, "0.99")
-                    no30_price_entry = self.no_frame.grid_slaves(row=62, column=1)[0]
-                    no30_price_entry.delete(0, tk.END)
-                    no30_price_entry.insert(0, "0.99")
-                    # 增加等待 1秒
-                    time.sleep(1)
+
+                    if self.Verify_trade_no():
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy No 0",
+                            price=no_price,
+                            amount=float(self.no_amount_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                        # 重置Yes0和No0价格为0.00
+                        self.yes_price_entry.delete(0, tk.END)
+                        self.yes_price_entry.insert(0, "0.00")
+                        self.no_price_entry.delete(0, tk.END)
+                        self.no_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes1价格为0.53
+                        yes1_price_entry = self.yes_frame.grid_slaves(row=2, column=1)[0]
+                        yes1_price_entry.delete(0, tk.END)
+                        yes1_price_entry.insert(0, str(self.default_target_price))
+                        yes1_price_entry.configure(fg='red')  # 添加红色设置
+                        # 设置 Yes30和No30价格为0.99
+                        yes30_price_entry = self.yes_frame.grid_slaves(row=60, column=1)[0]
+                        yes30_price_entry.delete(0, tk.END)
+                        yes30_price_entry.insert(0, "0.99")
+                        yes30_price_entry.configure(fg='red')  # 添加红色设置
+                        no30_price_entry = self.no_frame.grid_slaves(row=60, column=1)[0]
+                        no30_price_entry.delete(0, tk.END)
+                        no30_price_entry.insert(0, "0.99")
+                        no30_price_entry.configure(fg='red')  # 添加红色设置
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.First_trade()                               
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -2336,30 +2407,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Second_trade")
-                    # 卖出 NO
-                    self.only_sell_no()
+                    if self.Verify_trade_yes():
+                        # 卖出 NO
+                        self.only_sell_no()
 
-                    # 重置Yes1和No1价格为0.00
-                    yes1_price_entry.delete(0, tk.END)
-                    yes1_price_entry.insert(0, "0.00")
-                    no1_price_entry.delete(0, tk.END)
-                    no1_price_entry.insert(0, "0.00")
-                    
-                    # 设置No2价格为0.53
-                    no2_price_entry = self.no_frame.grid_slaves(row=4, column=1)[0]
-                    no2_price_entry.delete(0, tk.END)
-                    no2_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy Yes 1",
-                        price=yes_price,
-                        amount=float(yes1_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
-                    
+                        # 重置Yes1和No1价格为0.00
+                        yes1_price_entry.delete(0, tk.END)
+                        yes1_price_entry.insert(0, "0.00")
+                        no1_price_entry.delete(0, tk.END)
+                        no1_price_entry.insert(0, "0.00")
+                        
+                        # 设置No2价格为0.53
+                        no2_price_entry = self.no_frame.grid_slaves(row=4, column=1)[0]
+                        no2_price_entry.delete(0, tk.END)
+                        no2_price_entry.insert(0, str(self.default_target_price))
+                        no2_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy Yes 1",
+                            price=yes_price,
+                            amount=float(yes1_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Second_trade()
                 # 检查No1价格匹配
                 elif abs(no1_target - no_price) < 0.0001 and no1_target > 0:
                     self.logger.info("No 1价格匹配，执行自动交易")
@@ -2374,29 +2449,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Second_trade")
-                    # 卖出 YES
-                    self.only_sell_yes()
+                    if self.Verify_trade_no():
+                        # 卖出 YES
+                        self.only_sell_yes()
 
-                    # 重置Yes1和No1价格为0.00
-                    yes1_price_entry.delete(0, tk.END)
-                    yes1_price_entry.insert(0, "0.00")
-                    no1_price_entry.delete(0, tk.END)
-                    no1_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes2价格为0.53
-                    yes2_price_entry = self.yes_frame.grid_slaves(row=4, column=1)[0]
-                    yes2_price_entry.delete(0, tk.END)
-                    yes2_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy No 1",
-                        price=no_price,
-                        amount=float(no1_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                        # 重置Yes1和No1价格为0.00
+                        yes1_price_entry.delete(0, tk.END)
+                        yes1_price_entry.insert(0, "0.00")
+                        no1_price_entry.delete(0, tk.END)
+                        no1_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes2价格为0.53
+                        yes2_price_entry = self.yes_frame.grid_slaves(row=4, column=1)[0]
+                        yes2_price_entry.delete(0, tk.END)
+                        yes2_price_entry.insert(0, str(self.default_target_price))
+                        yes2_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy No 1",
+                            price=no_price,
+                            amount=float(no1_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Second_trade()
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -2454,29 +2534,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Third_trade")
-                    # 卖出 NO
-                    self.only_sell_no()
+                    if self.Verify_trade_yes():
+                        # 卖出 NO
+                        self.only_sell_no()
 
-                    # 重置Yes2和No2价格为0.00
-                    yes2_price_entry.delete(0, tk.END)
-                    yes2_price_entry.insert(0, "0.00")
-                    no2_price_entry.delete(0, tk.END)
-                    no2_price_entry.insert(0, "0.00")
-                    
-                    # 设置No3价格为0.53
-                    no3_price_entry = self.no_frame.grid_slaves(row=6, column=1)[0]
-                    no3_price_entry.delete(0, tk.END)
-                    no3_price_entry.insert(0, "0.53")
+                        # 重置Yes2和No2价格为0.00
+                        yes2_price_entry.delete(0, tk.END)
+                        yes2_price_entry.insert(0, "0.00")
+                        no2_price_entry.delete(0, tk.END)
+                        no2_price_entry.insert(0, "0.00")
+                        
+                        # 设置No3价格为0.53
+                        no3_price_entry = self.no_frame.grid_slaves(row=6, column=1)[0]
+                        no3_price_entry.delete(0, tk.END)
+                        no3_price_entry.insert(0, str(self.default_target_price))
+                        no3_price_entry.configure(fg='red')  # 添加红色设置
 
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy Yes 2",
-                        price=yes_price,
-                        amount=float(yes2_price_entry.get()),
-                        trade_count=self.trade_count
-                    )   
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy Yes 2",
+                            price=yes_price,
+                            amount=float(yes2_price_entry.get()),
+                            trade_count=self.trade_count
+                        )   
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Third_trade()
                 # 检查No2价格匹配
                 elif abs(no2_target - no_price) < 0.0001 and no2_target > 0:
                     self.logger.info("No 2价格匹配，执行自动交易")
@@ -2490,29 +2575,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Third_trade")
-                    # 卖出 YES
-                    self.only_sell_yes()
+                    if self.Verify_trade_no():
+                        # 卖出 YES
+                        self.only_sell_yes()
 
-                    # 重置Yes2和No2价格为0.00
-                    yes2_price_entry.delete(0, tk.END)
-                    yes2_price_entry.insert(0, "0.00")
-                    no2_price_entry.delete(0, tk.END)
-                    no2_price_entry.insert(0, "0.00")
+                        # 重置Yes2和No2价格为0.00
+                        yes2_price_entry.delete(0, tk.END)
+                        yes2_price_entry.insert(0, "0.00")
+                        no2_price_entry.delete(0, tk.END)
+                        no2_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes3价格为0.53
+                        yes3_price_entry = self.yes_frame.grid_slaves(row=6, column=1)[0]
+                        yes3_price_entry.delete(0, tk.END)
+                        yes3_price_entry.insert(0, str(self.default_target_price))
+                        yes3_price_entry.configure(fg='red')  # 添加红色设置
                     
-                    # 设置Yes3价格为0.53
-                    yes3_price_entry = self.yes_frame.grid_slaves(row=6, column=1)[0]
-                    yes3_price_entry.delete(0, tk.END)
-                    yes3_price_entry.insert(0, "0.53")
-                   
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy No 2",
-                        price=no_price,
-                        amount=float(no2_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy No 2",
+                            price=no_price,
+                            amount=float(no2_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Third_trade()
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -2571,28 +2661,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Forth_trade")
-                    # 卖出 NO
-                    self.only_sell_no()
-                    # 重置Yes3和No3价格为0.00
-                    yes3_price_entry.delete(0, tk.END)
-                    yes3_price_entry.insert(0, "0.00")
-                    no3_price_entry.delete(0, tk.END)
-                    no3_price_entry.insert(0, "0.00")
-                    
-                    # 设置No4价格为0.53
-                    no4_price_entry = self.no_frame.grid_slaves(row=8, column=1)[0]
-                    no4_price_entry.delete(0, tk.END)
-                    no4_price_entry.insert(0, "0.53")
+                    if self.Verify_trade_yes():
+                        # 卖出 NO
+                        self.only_sell_no()
 
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy Yes 3",
-                        price=yes_price,
-                        amount=float(yes3_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                        # 重置Yes3和No3价格为0.00
+                        yes3_price_entry.delete(0, tk.END)
+                        yes3_price_entry.insert(0, "0.00")
+                        no3_price_entry.delete(0, tk.END)
+                        no3_price_entry.insert(0, "0.00")
+                    
+                        # 设置No4价格为0.53
+                        no4_price_entry = self.no_frame.grid_slaves(row=8, column=1)[0]
+                        no4_price_entry.delete(0, tk.END)
+                        no4_price_entry.insert(0, str(self.default_target_price))
+                        no4_price_entry.configure(fg='red')  # 添加红色设置
+
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy Yes 3",
+                            price=yes_price,
+                            amount=float(yes3_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Forth_trade()
                 # 检查No3价格匹配
                 elif abs(no3_target - no_price) < 0.0001 and no3_target > 0:
                     self.logger.info("No 3价格匹配，执行自动交易")
@@ -2606,28 +2702,33 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Forth_trade")
-                    # 卖出 YES
-                    self.only_sell_yes()
-                    # 重置Yes3和No3价格为0.00
-                    yes3_price_entry.delete(0, tk.END)
-                    yes3_price_entry.insert(0, "0.00")
-                    no3_price_entry.delete(0, tk.END)
-                    no3_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes4价格为0.53
-                    yes4_price_entry = self.yes_frame.grid_slaves(row=8, column=1)[0]
-                    yes4_price_entry.delete(0, tk.END)
-                    yes4_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy No 3",
-                        price=no_price,
-                        amount=float(no3_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        # 卖出 YES
+                        self.only_sell_yes()
+                        # 重置Yes3和No3价格为0.00
+                        yes3_price_entry.delete(0, tk.END)
+                        yes3_price_entry.insert(0, "0.00")
+                        no3_price_entry.delete(0, tk.END)
+                        no3_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes4价格为0.53
+                        yes4_price_entry = self.yes_frame.grid_slaves(row=8, column=1)[0]
+                        yes4_price_entry.delete(0, tk.END)
+                        yes4_price_entry.insert(0, str(self.default_target_price))
+                        yes4_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy No 3",
+                            price=no_price,
+                            amount=float(no3_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Forth_trade()
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -2686,28 +2787,33 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Fifth_trade")
-                    # 卖出 NO
-                    self.only_sell_no()
-                    
-                    # 重置Yes4和No4价格为0.00
-                    yes4_price_entry.delete(0, tk.END)
-                    yes4_price_entry.insert(0, "0.00")
-                    no4_price_entry.delete(0, tk.END)
-                    no4_price_entry.insert(0, "0.00")
-                    
-                    # 设No5价格为0.53
-                    no5_price_entry = self.no_frame.grid_slaves(row=10, column=1)[0]
-                    no5_price_entry.delete(0, tk.END)
-                    no5_price_entry.insert(0, "0.53")
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy Yes 4",
-                        price=yes_price,
-                        amount=float(yes4_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        # 卖出 NO
+                        self.only_sell_no()
+                        
+                        # 重置Yes4和No4价格为0.00
+                        yes4_price_entry.delete(0, tk.END)
+                        yes4_price_entry.insert(0, "0.00")
+                        no4_price_entry.delete(0, tk.END)
+                        no4_price_entry.insert(0, "0.00")
+                        
+                        # 设No5价格为0.53
+                        no5_price_entry = self.no_frame.grid_slaves(row=10, column=1)[0]
+                        no5_price_entry.delete(0, tk.END)
+                        no5_price_entry.insert(0, str(self.default_target_price))
+                        no5_price_entry.configure(fg='red')  # 添加红色设置
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy Yes 4",
+                            price=yes_price,
+                            amount=float(yes4_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Fifth_trade()
                 # 检查No4价格匹配
                 elif abs(no4_target - no_price) < 0.0001 and no4_target > 0:
                     self.logger.info("No 4价格匹配，执行自动交易")
@@ -2722,28 +2828,33 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Fifth_trade")
-                    # 卖出 YES
-                    self.only_sell_yes()
-                    
-                    # 重置Yes4和No4价格为0.00
-                    yes4_price_entry.delete(0, tk.END)
-                    yes4_price_entry.insert(0, "0.00")
-                    no4_price_entry.delete(0, tk.END)
-                    no4_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes5价格为0.53
-                    yes5_price_entry = self.yes_frame.grid_slaves(row=10, column=1)[0]
-                    yes5_price_entry.delete(0, tk.END)
-                    yes5_price_entry.insert(0, "0.53")
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy No 4",
-                        price=no_price,
-                        amount=float(no4_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        # 卖出 YES
+                        self.only_sell_yes()
+                        
+                        # 重置Yes4和No4价格为0.00
+                        yes4_price_entry.delete(0, tk.END)
+                        yes4_price_entry.insert(0, "0.00")
+                        no4_price_entry.delete(0, tk.END)
+                        no4_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes5价格为0.53
+                        yes5_price_entry = self.yes_frame.grid_slaves(row=10, column=1)[0]
+                        yes5_price_entry.delete(0, tk.END)
+                        yes5_price_entry.insert(0, str(self.default_target_price))
+                        yes5_price_entry.configure(fg='red')  # 添加红色设置
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy No 4",
+                            price=no_price,
+                            amount=float(no4_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Fifth_trade()
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -2802,27 +2913,32 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Sixth_trade")
-                    # 卖出 NO
-                    self.only_sell_no()
-                    # 重置Yes5和No5价格为0.00
-                    yes5_price_entry.delete(0, tk.END)
-                    yes5_price_entry.insert(0, "0.00")
-                    no5_price_entry.delete(0, tk.END)
-                    no5_price_entry.insert(0, "0.00")
-                    # 设置No6价格为0.53
-                    no6_price_entry = self.no_frame.grid_slaves(row=12, column=1)[0]
-                    no6_price_entry.delete(0, tk.END)
-                    no6_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy Yes 5",
-                        price=yes_price,
-                        amount=float(yes5_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        # 卖出 NO
+                        self.only_sell_no()
+                        # 重置Yes5和No5价格为0.00
+                        yes5_price_entry.delete(0, tk.END)
+                        yes5_price_entry.insert(0, "0.00")
+                        no5_price_entry.delete(0, tk.END)
+                        no5_price_entry.insert(0, "0.00")
+                        # 设置No6价格为0.53
+                        no6_price_entry = self.no_frame.grid_slaves(row=12, column=1)[0]
+                        no6_price_entry.delete(0, tk.END)
+                        no6_price_entry.insert(0, str(self.default_target_price))
+                        no6_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy Yes 5",
+                            price=yes_price,
+                            amount=float(yes5_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Sixth_trade()
                 # 检查No5价格匹配
                 elif abs(no5_target - no_price) < 0.0001 and no5_target > 0:
                     self.logger.info("No 5价格匹配，执行自动交易")
@@ -2837,28 +2953,33 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Sixth_trade")
-                    # 卖出 YES
-                    self.only_sell_yes()
-                    # 重置Yes5和No5价格为0.00
-                    yes5_price_entry.delete(0, tk.END)
-                    yes5_price_entry.insert(0, "0.00")
-                    no5_price_entry.delete(0, tk.END)
-                    no5_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes6价格为0.53
-                    yes6_price_entry = self.yes_frame.grid_slaves(row=12, column=1)[0]
-                    yes6_price_entry.delete(0, tk.END)
-                    yes6_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy No 5",
-                        price=no_price,
-                        amount=float(no5_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        # 卖出 YES
+                        self.only_sell_yes()
+                        # 重置Yes5和No5价格为0.00
+                        yes5_price_entry.delete(0, tk.END)
+                        yes5_price_entry.insert(0, "0.00")
+                        no5_price_entry.delete(0, tk.END)
+                        no5_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes6价格为0.53
+                        yes6_price_entry = self.yes_frame.grid_slaves(row=12, column=1)[0]
+                        yes6_price_entry.delete(0, tk.END)
+                        yes6_price_entry.insert(0, str(self.default_target_price))
+                        yes6_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy No 5",
+                            price=no_price,
+                            amount=float(no5_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Sixth_trade()
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -2917,29 +3038,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Seventh_trade")
-                    # 卖出 NO
-                    self.only_sell_no()
-                    
-                    # 重置Yes6和No6价格为0.00
-                    yes6_price_entry.delete(0, tk.END)
-                    yes6_price_entry.insert(0, "0.00")
-                    no6_price_entry.delete(0, tk.END)
-                    no6_price_entry.insert(0, "0.00")
-                    
-                    # 设置No7价格为0.53
-                    no7_price_entry = self.no_frame.grid_slaves(row=14, column=1)[0]
-                    no7_price_entry.delete(0, tk.END)
-                    no7_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy Yes 6",
-                        price=yes_price,
-                        amount=float(yes6_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        # 卖出 NO
+                        self.only_sell_no()
+                        
+                        # 重置Yes6和No6价格为0.00
+                        yes6_price_entry.delete(0, tk.END)
+                        yes6_price_entry.insert(0, "0.00")
+                        no6_price_entry.delete(0, tk.END)
+                        no6_price_entry.insert(0, "0.00")
+                        
+                        # 设置No7价格为0.53
+                        no7_price_entry = self.no_frame.grid_slaves(row=14, column=1)[0]
+                        no7_price_entry.delete(0, tk.END)
+                        no7_price_entry.insert(0, str(self.default_target_price))
+                        no7_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy Yes 6",
+                            price=yes_price,
+                            amount=float(yes6_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Seventh_trade()
 
                 # 检查No6价格匹配
                 elif abs(no6_target - no_price) < 0.0001 and no6_target > 0:
@@ -2954,20 +3080,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Seventh_trade")
-                    # 卖出 YES
-                    self.only_sell_yes()
-                    
-                    # 重置Yes6和No6价格为0.00
-                    yes6_price_entry.delete(0, tk.END)
-                    yes6_price_entry.insert(0, "0.00")
-                    no6_price_entry.delete(0, tk.END)
-                    no6_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes7价格为0.53
-                    yes7_price_entry = self.yes_frame.grid_slaves(row=14, column=1)[0]
-                    yes7_price_entry.delete(0, tk.END)
-                    yes7_price_entry.insert(0, "0.53")
-                    
+                    if self.Verify_trade_no():
+                        # 卖出 YES
+                        self.only_sell_yes()
+                        
+                        # 重置Yes6和No6价格为0.00
+                        yes6_price_entry.delete(0, tk.END)
+                        yes6_price_entry.insert(0, "0.00")
+                        no6_price_entry.delete(0, tk.END)
+                        no6_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes7价格为0.53
+                        yes7_price_entry = self.yes_frame.grid_slaves(row=14, column=1)[0]
+                        yes7_price_entry.delete(0, tk.END)
+                        yes7_price_entry.insert(0, str(self.default_target_price))
+                        yes7_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy No 6",
+                            price=no_price,
+                            amount=float(no6_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Seventh_trade()
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -3026,29 +3166,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Eighth_trade")
-                    # 卖出 NO
-                    self.only_sell_no()
-                    
-                    # 重置Yes7和No7价格为0.00
-                    yes7_price_entry.delete(0, tk.END)
-                    yes7_price_entry.insert(0, "0.00")
-                    no7_price_entry.delete(0, tk.END)
-                    no7_price_entry.insert(0, "0.00")
-                    
-                    # 设置No8价格为0.53
-                    no8_price_entry = self.no_frame.grid_slaves(row=16, column=1)[0]
-                    no8_price_entry.delete(0, tk.END)
-                    no8_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy Yes 7",
-                        price=yes_price,
-                        amount=float(yes7_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        # 卖出 NO
+                        self.only_sell_no()
+                        
+                        # 重置Yes7和No7价格为0.00
+                        yes7_price_entry.delete(0, tk.END)
+                        yes7_price_entry.insert(0, "0.00")
+                        no7_price_entry.delete(0, tk.END)
+                        no7_price_entry.insert(0, "0.00")
+                        
+                        # 设置No8价格为0.53
+                        no8_price_entry = self.no_frame.grid_slaves(row=16, column=1)[0]
+                        no8_price_entry.delete(0, tk.END)
+                        no8_price_entry.insert(0, str(self.default_target_price))
+                        no8_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy Yes 7",
+                            price=yes_price,
+                            amount=float(yes7_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Eighth_trade()
 
                 # 检查No7价格匹配
                 elif abs(no7_target - no_price) < 0.0001 and no7_target > 0:
@@ -3063,29 +3208,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Eighth_trade")
-                    # 卖出 YES
-                    self.only_sell_yes()
-                    
-                    # 重置Yes7和No7价格为0.00
-                    yes7_price_entry.delete(0, tk.END)
-                    yes7_price_entry.insert(0, "0.00")
-                    no7_price_entry.delete(0, tk.END)
-                    no7_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes8价格为0.53
-                    yes8_price_entry = self.yes_frame.grid_slaves(row=16, column=1)[0]
-                    yes8_price_entry.delete(0, tk.END)
-                    yes8_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy No 7",
-                        price=no_price,
-                        amount=float(no7_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        # 卖出 YES
+                        self.only_sell_yes()
+                        
+                        # 重置Yes7和No7价格为0.00
+                        yes7_price_entry.delete(0, tk.END)
+                        yes7_price_entry.insert(0, "0.00")
+                        no7_price_entry.delete(0, tk.END)
+                        no7_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes8价格为0.53
+                        yes8_price_entry = self.yes_frame.grid_slaves(row=16, column=1)[0]
+                        yes8_price_entry.delete(0, tk.END)
+                        yes8_price_entry.insert(0, str(self.default_target_price))
+                        yes8_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy No 7",
+                            price=no_price,
+                            amount=float(no7_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Eighth_trade()
                 
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
@@ -3145,29 +3295,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Ninth_trade")
-                    # 卖出 NO
-                    self.only_sell_no()
-                    
-                    # 重置Yes8和No8价格为0.00
-                    yes8_price_entry.delete(0, tk.END)
-                    yes8_price_entry.insert(0, "0.00")
-                    no8_price_entry.delete(0, tk.END)
-                    no8_price_entry.insert(0, "0.00")
-                    
-                    # 设置No9价格为0.53
-                    no9_price_entry = self.no_frame.grid_slaves(row=18, column=1)[0]
-                    no9_price_entry.delete(0, tk.END)
-                    no9_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy Yes 8",
-                        price=yes_price,
-                        amount=float(yes8_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        # 卖出 NO
+                        self.only_sell_no()
+                        
+                        # 重置Yes8和No8价格为0.00
+                        yes8_price_entry.delete(0, tk.END)
+                        yes8_price_entry.insert(0, "0.00")
+                        no8_price_entry.delete(0, tk.END)
+                        no8_price_entry.insert(0, "0.00")
+                        
+                        # 设置No9价格为0.53
+                        no9_price_entry = self.no_frame.grid_slaves(row=18, column=1)[0]
+                        no9_price_entry.delete(0, tk.END)
+                        no9_price_entry.insert(0, str(self.default_target_price))
+                        no9_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy Yes 8",
+                            price=yes_price,
+                            amount=float(yes8_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Ninth_trade()
 
                 # 检查No8价格匹配
                 elif abs(no8_target - no_price) < 0.0001 and no8_target > 0:
@@ -3182,29 +3337,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Ninth_trade")
-                    # 卖出 YES
-                    self.only_sell_yes()
-                    
-                    # 重置Yes8和No8价格为0.00
-                    yes8_price_entry.delete(0, tk.END)
-                    yes8_price_entry.insert(0, "0.00")
-                    no8_price_entry.delete(0, tk.END)
-                    no8_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes9价格为0.53
-                    yes9_price_entry = self.yes_frame.grid_slaves(row=18, column=1)[0]
-                    yes9_price_entry.delete(0, tk.END)
-                    yes9_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy No 8",
-                        price=no_price,
-                        amount=float(no8_price_entry.get()),
-                        trade_count=self.trade_count
-                    )       
+                    if self.Verify_trade_no():
+                        # 卖出 YES
+                        self.only_sell_yes()
+                        
+                        # 重置Yes8和No8价格为0.00
+                        yes8_price_entry.delete(0, tk.END)
+                        yes8_price_entry.insert(0, "0.00")
+                        no8_price_entry.delete(0, tk.END)
+                        no8_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes9价格为0.53
+                        yes9_price_entry = self.yes_frame.grid_slaves(row=18, column=1)[0]
+                        yes9_price_entry.delete(0, tk.END)
+                        yes9_price_entry.insert(0, str(self.default_target_price))
+                        yes9_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy No 8",
+                            price=no_price,
+                            amount=float(no8_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Ninth_trade()
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -3263,29 +3423,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Tenth_trade")
-                    # 卖出 NO
-                    self.only_sell_no()
-                    
-                    # 重置Yes9和No9价格为0.00
-                    yes9_price_entry.delete(0, tk.END)
-                    yes9_price_entry.insert(0, "0.00")
-                    no9_price_entry.delete(0, tk.END)
-                    no9_price_entry.insert(0, "0.00")
-                    
-                    # 设置No10价格为0.53
-                    no10_price_entry = self.no_frame.grid_slaves(row=20, column=1)[0]
-                    no10_price_entry.delete(0, tk.END)
-                    no10_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy Yes 9",
-                        price=yes_price,
-                        amount=float(yes9_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        # 卖出 NO
+                        self.only_sell_no()
+                        
+                        # 重置Yes9和No9价格为0.00
+                        yes9_price_entry.delete(0, tk.END)
+                        yes9_price_entry.insert(0, "0.00")
+                        no9_price_entry.delete(0, tk.END)
+                        no9_price_entry.insert(0, "0.00")
+                        
+                        # 设置No10价格为0.53
+                        no10_price_entry = self.no_frame.grid_slaves(row=20, column=1)[0]
+                        no10_price_entry.delete(0, tk.END)
+                        no10_price_entry.insert(0, str(self.default_target_price))
+                        no10_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy Yes 9",
+                            price=yes_price,
+                            amount=float(yes9_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Tenth_trade()
 
                 # 检查No9价格匹配
                 elif abs(no9_target - no_price) < 0.0001 and no9_target > 0:
@@ -3300,29 +3465,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Tenth_trade")
-                    # 卖出 YES
-                    self.only_sell_yes()
-                    
-                    # 重置Yes9和No9价格为0.00
-                    yes9_price_entry.delete(0, tk.END)
-                    yes9_price_entry.insert(0, "0.00")
-                    no9_price_entry.delete(0, tk.END)
-                    no9_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes10价格为0.53
-                    yes10_price_entry = self.yes_frame.grid_slaves(row=20, column=1)[0]
-                    yes10_price_entry.delete(0, tk.END)
-                    yes10_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy No 9",
-                        price=no_price,
-                        amount=float(no9_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        # 卖出 YES
+                        self.only_sell_yes()
+                        
+                        # 重置Yes9和No9价格为0.00
+                        yes9_price_entry.delete(0, tk.END)
+                        yes9_price_entry.insert(0, "0.00")
+                        no9_price_entry.delete(0, tk.END)
+                        no9_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes10价格为0.53
+                        yes10_price_entry = self.yes_frame.grid_slaves(row=20, column=1)[0]
+                        yes10_price_entry.delete(0, tk.END)
+                        yes10_price_entry.insert(0, str(self.default_target_price))
+                        yes10_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy No 9",
+                            price=no_price,
+                            amount=float(no9_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Tenth_trade()
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -3381,29 +3551,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Eleventh_trade")
-                    # 卖出 NO
-                    self.only_sell_no()
-                    
-                    # 重置Yes10和No10价格为0.00
-                    yes10_price_entry.delete(0, tk.END)
-                    yes10_price_entry.insert(0, "0.00")
-                    no10_price_entry.delete(0, tk.END)
-                    no10_price_entry.insert(0, "0.00")
-                    
-                    # 设置No11价格为0.53
-                    no11_price_entry = self.no_frame.grid_slaves(row=22, column=1)[0]
-                    no11_price_entry.delete(0, tk.END)
-                    no11_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy Yes 10",
-                        price=yes_price,
-                        amount=float(yes10_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        # 卖出 NO
+                        self.only_sell_no()
+                        
+                        # 重置Yes10和No10价格为0.00
+                        yes10_price_entry.delete(0, tk.END)
+                        yes10_price_entry.insert(0, "0.00")
+                        no10_price_entry.delete(0, tk.END)
+                        no10_price_entry.insert(0, "0.00")
+                        
+                        # 设置No11价格为0.53
+                        no11_price_entry = self.no_frame.grid_slaves(row=22, column=1)[0]
+                        no11_price_entry.delete(0, tk.END)
+                        no11_price_entry.insert(0, str(self.default_target_price))
+                        no11_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy Yes 10",
+                            price=yes_price,
+                            amount=float(yes10_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Eleventh_trade()
 
                 # 检查No10价格匹配
                 elif abs(no10_target - no_price) < 0.0001 and no10_target > 0:
@@ -3418,29 +3593,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Eleventh_trade")
-                    # 卖出 YES
-                    self.only_sell_yes()
-                    
-                    # 重置Yes10和No10价格为0.00
-                    yes10_price_entry.delete(0, tk.END)
-                    yes10_price_entry.insert(0, "0.00")
-                    no10_price_entry.delete(0, tk.END)
-                    no10_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes11价格为0.53
-                    yes11_price_entry = self.yes_frame.grid_slaves(row=22, column=1)[0]
-                    yes11_price_entry.delete(0, tk.END)
-                    yes11_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy No 10",
-                        price=no_price,
-                        amount=float(no10_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        # 卖出 YES
+                        self.only_sell_yes()
+                        
+                        # 重置Yes10和No10价格为0.00
+                        yes10_price_entry.delete(0, tk.END)
+                        yes10_price_entry.insert(0, "0.00")
+                        no10_price_entry.delete(0, tk.END)
+                        no10_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes11价格为0.53
+                        yes11_price_entry = self.yes_frame.grid_slaves(row=22, column=1)[0]
+                        yes11_price_entry.delete(0, tk.END)
+                        yes11_price_entry.insert(0, str(self.default_target_price))
+                        yes11_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy No 10",
+                            price=no_price,
+                            amount=float(no10_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Eleventh_trade()
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -3499,29 +3679,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Twelfth_trade")
-                    # 卖出 NO
-                    self.only_sell_no()
-                    
-                    # 重置Yes11和No11价格为0.00
-                    yes11_price_entry.delete(0, tk.END)
-                    yes11_price_entry.insert(0, "0.00")
-                    no11_price_entry.delete(0, tk.END)
-                    no11_price_entry.insert(0, "0.00")
-                    
-                    # 设置No12价格为0.53
-                    no12_price_entry = self.no_frame.grid_slaves(row=24, column=1)[0]
-                    no12_price_entry.delete(0, tk.END)
-                    no12_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy Yes 11",
-                        price=yes_price,
-                        amount=float(yes11_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        # 卖出 NO
+                        self.only_sell_no()
+                        
+                        # 重置Yes11和No11价格为0.00
+                        yes11_price_entry.delete(0, tk.END)
+                        yes11_price_entry.insert(0, "0.00")
+                        no11_price_entry.delete(0, tk.END)
+                        no11_price_entry.insert(0, "0.00")
+                        
+                        # 设置No12价格为0.53
+                        no12_price_entry = self.no_frame.grid_slaves(row=24, column=1)[0]
+                        no12_price_entry.delete(0, tk.END)
+                        no12_price_entry.insert(0, str(self.default_target_price))
+                        no12_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy Yes 11",
+                            price=yes_price,
+                            amount=float(yes11_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twelfth_trade()
 
                 # 检查No11价格匹配
                 elif abs(no11_target - no_price) < 0.0001 and no11_target > 0:
@@ -3536,29 +3721,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Twelfth_trade")
-                    # 卖出 YES
-                    self.only_sell_yes()
-                    
-                    # 重置Yes11和No11价格为0.00
-                    yes11_price_entry.delete(0, tk.END)
-                    yes11_price_entry.insert(0, "0.00")
-                    no11_price_entry.delete(0, tk.END)
-                    no11_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes12价格为0.53
-                    yes12_price_entry = self.yes_frame.grid_slaves(row=24, column=1)[0]
-                    yes12_price_entry.delete(0, tk.END)
-                    yes12_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy No 11",
-                        price=no_price,
-                        amount=float(no11_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        # 卖出 YES
+                        self.only_sell_yes()
+                        
+                        # 重置Yes11和No11价格为0.00
+                        yes11_price_entry.delete(0, tk.END)
+                        yes11_price_entry.insert(0, "0.00")
+                        no11_price_entry.delete(0, tk.END)
+                        no11_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes12价格为0.53
+                        yes12_price_entry = self.yes_frame.grid_slaves(row=24, column=1)[0]
+                        yes12_price_entry.delete(0, tk.END)
+                        yes12_price_entry.insert(0, str(self.default_target_price))
+                        yes12_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy No 11",
+                            price=no_price,
+                            amount=float(no11_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twelfth_trade()
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -3617,29 +3807,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Thirteenth_trade")
-                    # 卖出 NO
-                    self.only_sell_no()
-                    
-                    # 重置Yes12和No12价格为0.00
-                    yes12_price_entry.delete(0, tk.END)
-                    yes12_price_entry.insert(0, "0.00")
-                    no12_price_entry.delete(0, tk.END)
-                    no12_price_entry.insert(0, "0.00")
-                    
-                    # 设置No13价格为0.53
-                    no13_price_entry = self.no_frame.grid_slaves(row=26, column=1)[0]
-                    no13_price_entry.delete(0, tk.END)
-                    no13_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy Yes 12",
-                        price=yes_price,
-                        amount=float(yes12_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        # 卖出 NO
+                        self.only_sell_no()
+                        
+                        # 重置Yes12和No12价格为0.00
+                        yes12_price_entry.delete(0, tk.END)
+                        yes12_price_entry.insert(0, "0.00")
+                        no12_price_entry.delete(0, tk.END)
+                        no12_price_entry.insert(0, "0.00")
+                        
+                        # 设置No13价格为0.53
+                        no13_price_entry = self.no_frame.grid_slaves(row=26, column=1)[0]
+                        no13_price_entry.delete(0, tk.END)
+                        no13_price_entry.insert(0, str(self.default_target_price))
+                        no13_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy Yes 12",
+                            price=yes_price,
+                            amount=float(yes12_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Thirteenth_trade()
 
                 # 检查No12价格匹配
                 elif abs(no12_target - no_price) < 0.0001 and no12_target > 0:
@@ -3654,29 +3849,34 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Thirteenth_trade")
-                    # 卖出 YES
-                    self.only_sell_yes()
-                    
-                    # 重置Yes12和No12价格为0.00
-                    yes12_price_entry.delete(0, tk.END)
-                    yes12_price_entry.insert(0, "0.00")
-                    no12_price_entry.delete(0, tk.END)
-                    no12_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes13价格为0.53
-                    yes13_price_entry = self.yes_frame.grid_slaves(row=26, column=1)[0]
-                    yes13_price_entry.delete(0, tk.END)
-                    yes13_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy No 12",
-                        price=no_price,
-                        amount=float(no12_price_entry.get()),
-                        trade_count=self.trade_count
-                    )  
+                    if self.Verify_trade_no():
+                        # 卖出 YES
+                        self.only_sell_yes()
+                        
+                        # 重置Yes12和No12价格为0.00
+                        yes12_price_entry.delete(0, tk.END)
+                        yes12_price_entry.insert(0, "0.00")
+                        no12_price_entry.delete(0, tk.END)
+                        no12_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes13价格为0.53
+                        yes13_price_entry = self.yes_frame.grid_slaves(row=26, column=1)[0]
+                        yes13_price_entry.delete(0, tk.END)
+                        yes13_price_entry.insert(0, str(self.default_target_price))
+                        yes13_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy No 12",
+                            price=no_price,
+                            amount=float(no12_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Thirteenth_trade()
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -3735,28 +3935,33 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Fourteenth_trade")
-                    # 卖出 NO
-                    self.only_sell_no()
-                    
-                    # 重置Yes13和No13价格为0.00
-                    yes13_price_entry.delete(0, tk.END)
-                    yes13_price_entry.insert(0, "0.00")
-                    no13_price_entry.delete(0, tk.END)
-                    no13_price_entry.insert(0, "0.00")
-                    # 设置No14价格为0.53
-                    no14_price_entry = self.no_frame.grid_slaves(row=28, column=1)[0]
-                    no14_price_entry.delete(0, tk.END)
-                    no14_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy Yes 13",
-                        price=yes_price,
-                        amount=float(yes13_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        # 卖出 NO
+                        self.only_sell_no()
+                        
+                        # 重置Yes13和No13价格为0.00
+                        yes13_price_entry.delete(0, tk.END)
+                        yes13_price_entry.insert(0, "0.00")
+                        no13_price_entry.delete(0, tk.END)
+                        no13_price_entry.insert(0, "0.00")
+                        # 设置No14价格为0.53
+                        no14_price_entry = self.no_frame.grid_slaves(row=28, column=1)[0]
+                        no14_price_entry.delete(0, tk.END)
+                        no14_price_entry.insert(0, str(self.default_target_price))
+                        no14_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy Yes 13",
+                            price=yes_price,
+                            amount=float(yes13_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Fourteenth_trade()
 
                 # 检查No13价格匹配
                 elif abs(no13_target - no_price) < 0.0001 and no13_target > 0:
@@ -3771,28 +3976,33 @@ class CryptoTrader:
                     self._handle_metamask_popup()
                     # 执行等待和刷新
                     self.sleep_refresh("Fourteenth_trade")
-                    # 卖出 YES
-                    self.only_sell_yes()
-                    
-                    # 重置Yes13和No13价格为0.00
-                    yes13_price_entry.delete(0, tk.END)
-                    yes13_price_entry.insert(0, "0.00")
-                    no13_price_entry.delete(0, tk.END)
-                    no13_price_entry.insert(0, "0.00")
-                    # 设置Yes14价格为0.53
-                    yes14_price_entry = self.yes_frame.grid_slaves(row=28, column=1)[0]
-                    yes14_price_entry.delete(0, tk.END)
-                    yes14_price_entry.insert(0, "0.53")
-                    
-                    # 增加交易次数
-                    self.trade_count += 1
-                    # 发送交易邮件
-                    self.send_trade_email(
-                        trade_type="Buy No 13",
-                        price=no_price,
-                        amount=float(no13_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        # 卖出 YES
+                        self.only_sell_yes()
+                        
+                        # 重置Yes13和No13价格为0.00
+                        yes13_price_entry.delete(0, tk.END)
+                        yes13_price_entry.insert(0, "0.00")
+                        no13_price_entry.delete(0, tk.END)
+                        no13_price_entry.insert(0, "0.00")
+                        # 设置Yes14价格为0.53
+                        yes14_price_entry = self.yes_frame.grid_slaves(row=28, column=1)[0]
+                        yes14_price_entry.delete(0, tk.END)
+                        yes14_price_entry.insert(0, str(self.default_target_price))
+                        yes14_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        # 增加交易次数
+                        self.trade_count += 1
+                        # 发送交易邮件
+                        self.send_trade_email(
+                            trade_type="Buy No 13",
+                            price=no_price,
+                            amount=float(no13_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Fourteenth_trade()
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -3848,26 +4058,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Fifteenth_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes14和No14价格为0.00
-                    yes14_price_entry.delete(0, tk.END)
-                    yes14_price_entry.insert(0, "0.00")
-                    no14_price_entry.delete(0, tk.END)
-                    no14_price_entry.insert(0, "0.00")
-                    
-                    # 设置No15价格为0.53
-                    no15_price_entry = self.no_frame.grid_slaves(row=30, column=1)[0]
-                    no15_price_entry.delete(0, tk.END)
-                    no15_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 14",
-                        price=yes_price,
-                        amount=float(yes14_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes14和No14价格为0.00
+                        yes14_price_entry.delete(0, tk.END)
+                        yes14_price_entry.insert(0, "0.00")
+                        no14_price_entry.delete(0, tk.END)
+                        no14_price_entry.insert(0, "0.00")
+                        
+                        # 设置No15价格为0.53
+                        no15_price_entry = self.no_frame.grid_slaves(row=30, column=1)[0]
+                        no15_price_entry.delete(0, tk.END)
+                        no15_price_entry.insert(0, str(self.default_target_price))
+                        no15_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 14",
+                            price=yes_price,
+                            amount=float(yes14_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Fifteenth_trade()
 
                 # 检查No14价格匹配
                 elif abs(no14_target - no_price) < 0.0001 and no14_target > 0:
@@ -3880,26 +4095,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Fifteenth_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes14和No14价格为0.00
-                    yes14_price_entry.delete(0, tk.END)
-                    yes14_price_entry.insert(0, "0.00")
-                    no14_price_entry.delete(0, tk.END)
-                    no14_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes15价格为0.53
-                    yes15_price_entry = self.yes_frame.grid_slaves(row=30, column=1)[0]
-                    yes15_price_entry.delete(0, tk.END)
-                    yes15_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 14",
-                        price=no_price,
-                        amount=float(no14_price_entry.get()),
-                        trade_count=self.trade_count
-                    )          
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes14和No14价格为0.00
+                        yes14_price_entry.delete(0, tk.END)
+                        yes14_price_entry.insert(0, "0.00")
+                        no14_price_entry.delete(0, tk.END)
+                        no14_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes15价格为0.53
+                        yes15_price_entry = self.yes_frame.grid_slaves(row=30, column=1)[0]
+                        yes15_price_entry.delete(0, tk.END)
+                        yes15_price_entry.insert(0, str(self.default_target_price))
+                        yes15_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 14",
+                            price=no_price,
+                            amount=float(no14_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Fifteenth_trade()
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -3957,26 +4177,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Sixteenth_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes15和No15价格为0.00
-                    yes15_price_entry.delete(0, tk.END)
-                    yes15_price_entry.insert(0, "0.00")
-                    no15_price_entry.delete(0, tk.END)
-                    no15_price_entry.insert(0, "0.00")
-                    
-                    # 设置No16价格为0.53
-                    no16_price_entry = self.no_frame.grid_slaves(row=32, column=1)[0]
-                    no16_price_entry.delete(0, tk.END)
-                    no16_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 15",
-                        price=yes_price,
-                        amount=float(yes15_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes15和No15价格为0.00
+                        yes15_price_entry.delete(0, tk.END)
+                        yes15_price_entry.insert(0, "0.00")
+                        no15_price_entry.delete(0, tk.END)
+                        no15_price_entry.insert(0, "0.00")
+                        
+                        # 设置No16价格为0.53
+                        no16_price_entry = self.no_frame.grid_slaves(row=32, column=1)[0]
+                        no16_price_entry.delete(0, tk.END)
+                        no16_price_entry.insert(0, str(self.default_target_price))
+                        no16_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 15",
+                            price=yes_price,
+                            amount=float(yes15_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Sixteenth_trade()
                 
                 # 检查No15价格匹配
                 elif abs(no15_target - no_price) < 0.0001 and no15_target > 0:
@@ -3989,26 +4214,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Sixteenth_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes15和No15价格为0.00
-                    yes15_price_entry.delete(0, tk.END)
-                    yes15_price_entry.insert(0, "0.00")
-                    no15_price_entry.delete(0, tk.END)
-                    no15_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes16价格为0.53
-                    yes16_price_entry = self.yes_frame.grid_slaves(row=32, column=1)[0]
-                    yes16_price_entry.delete(0, tk.END)
-                    yes16_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 15",
-                        price=no_price,
-                        amount=float(no15_price_entry.get()),
-                        trade_count=self.trade_count
-                    )    
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes15和No15价格为0.00
+                        yes15_price_entry.delete(0, tk.END)
+                        yes15_price_entry.insert(0, "0.00")
+                        no15_price_entry.delete(0, tk.END)
+                        no15_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes16价格为0.53
+                        yes16_price_entry = self.yes_frame.grid_slaves(row=32, column=1)[0]
+                        yes16_price_entry.delete(0, tk.END)
+                        yes16_price_entry.insert(0, str(self.default_target_price))
+                        yes16_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 15",
+                            price=no_price,
+                            amount=float(no15_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Sixteenth_trade()
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -4066,26 +4296,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Seventeenth_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes16和No16价格为0.00
-                    yes16_price_entry.delete(0, tk.END)
-                    yes16_price_entry.insert(0, "0.00")
-                    no16_price_entry.delete(0, tk.END)
-                    no16_price_entry.insert(0, "0.00")
-                    
-                    # 设置No17价格
-                    no17_price_entry = self.no_frame.grid_slaves(row=34, column=1)[0]
-                    no17_price_entry.delete(0, tk.END)
-                    no17_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 16",
-                        price=yes_price,
-                        amount=float(yes16_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes16和No16价格为0.00
+                        yes16_price_entry.delete(0, tk.END)
+                        yes16_price_entry.insert(0, "0.00")
+                        no16_price_entry.delete(0, tk.END)
+                        no16_price_entry.insert(0, "0.00")
+                        
+                        # 设置No17价格
+                        no17_price_entry = self.no_frame.grid_slaves(row=34, column=1)[0]
+                        no17_price_entry.delete(0, tk.END)
+                        no17_price_entry.insert(0, str(self.default_target_price))
+                        no17_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 16",
+                            price=yes_price,
+                            amount=float(yes16_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Seventeenth_trade()
                 
                 # 检查No16价格匹配
                 elif abs(no16_target - no_price) < 0.0001 and no16_target > 0:
@@ -4098,26 +4333,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Seventeenth_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes16和No16价格为0.00
-                    yes16_price_entry.delete(0, tk.END)
-                    yes16_price_entry.insert(0, "0.00")
-                    no16_price_entry.delete(0, tk.END)
-                    no16_price_entry.insert(0, "0.00")
-                    
-                    # 设置No17价格
-                    no17_price_entry = self.no_frame.grid_slaves(row=34, column=1)[0]
-                    no17_price_entry.delete(0, tk.END)
-                    no17_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 16",
-                        price=no_price,
-                        amount=float(no16_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes16和No16价格为0.00
+                        yes16_price_entry.delete(0, tk.END)
+                        yes16_price_entry.insert(0, "0.00")
+                        no16_price_entry.delete(0, tk.END)
+                        no16_price_entry.insert(0, "0.00")
+                        
+                        # 设置No17价格
+                        no17_price_entry = self.no_frame.grid_slaves(row=34, column=1)[0]
+                        no17_price_entry.delete(0, tk.END)
+                        no17_price_entry.insert(0, str(self.default_target_price))
+                        no17_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 16",
+                            price=no_price,
+                            amount=float(no16_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Seventeenth_trade()
                 
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
@@ -4176,26 +4416,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Eighteenth_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes17和No17价格为0.00
-                    yes17_price_entry.delete(0, tk.END)
-                    yes17_price_entry.insert(0, "0.00")
-                    no17_price_entry.delete(0, tk.END)
-                    no17_price_entry.insert(0, "0.00")
-                    
-                    # 设置No18价格
-                    no18_price_entry = self.no_frame.grid_slaves(row=36, column=1)[0]
-                    no18_price_entry.delete(0, tk.END)
-                    no18_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 17",
-                        price=yes_price,
-                        amount=float(yes17_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes17和No17价格为0.00
+                        yes17_price_entry.delete(0, tk.END)
+                        yes17_price_entry.insert(0, "0.00")
+                        no17_price_entry.delete(0, tk.END)
+                        no17_price_entry.insert(0, "0.00")
+                        
+                        # 设置No18价格
+                        no18_price_entry = self.no_frame.grid_slaves(row=36, column=1)[0]
+                        no18_price_entry.delete(0, tk.END)
+                        no18_price_entry.insert(0, str(self.default_target_price))
+                        no18_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 17",
+                            price=yes_price,
+                            amount=float(yes17_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Eighteenth_trade()
                 
                 # 检查No17价格匹配
                 elif abs(no17_target - no_price) < 0.0001 and no17_target > 0:
@@ -4208,27 +4453,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Eighteenth_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes17和No17价格为0.00
-                    yes17_price_entry.delete(0, tk.END)
-                    yes17_price_entry.insert(0, "0.00")
-                    no17_price_entry.delete(0, tk.END)
-                    no17_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes18价格  
-                    yes18_price_entry = self.yes_frame.grid_slaves(row=36, column=1)[0]
-                    yes18_price_entry.delete(0, tk.END)
-                    yes18_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 17",
-                        price=no_price,
-                        amount=float(no17_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
-                
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes17和No17价格为0.00
+                        yes17_price_entry.delete(0, tk.END)
+                        yes17_price_entry.insert(0, "0.00")
+                        no17_price_entry.delete(0, tk.END)
+                        no17_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes18价格  
+                        yes18_price_entry = self.yes_frame.grid_slaves(row=36, column=1)[0]
+                        yes18_price_entry.delete(0, tk.END)
+                        yes18_price_entry.insert(0, str(self.default_target_price))
+                        yes18_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 17",
+                            price=no_price,
+                            amount=float(no17_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Eighteenth_trade()       
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
         except Exception as e:
@@ -4286,26 +4535,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Nineteenth_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes18和No18价格为0.00
-                    yes18_price_entry.delete(0, tk.END)
-                    yes18_price_entry.insert(0, "0.00")
-                    no18_price_entry.delete(0, tk.END)
-                    no18_price_entry.insert(0, "0.00")
-                    
-                    # 设置No19价格
-                    no19_price_entry = self.no_frame.grid_slaves(row=38, column=1)[0]
-                    no19_price_entry.delete(0, tk.END)
-                    no19_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 18",
-                        price=yes_price,
-                        amount=float(yes18_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes18和No18价格为0.00
+                        yes18_price_entry.delete(0, tk.END)
+                        yes18_price_entry.insert(0, "0.00")
+                        no18_price_entry.delete(0, tk.END)
+                        no18_price_entry.insert(0, "0.00")
+                        
+                        # 设置No19价格
+                        no19_price_entry = self.no_frame.grid_slaves(row=38, column=1)[0]
+                        no19_price_entry.delete(0, tk.END)
+                        no19_price_entry.insert(0, str(self.default_target_price))
+                        no19_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 18",
+                            price=yes_price,
+                            amount=float(yes18_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Nineteenth_trade()
                 
                 # 检查No18价格匹配
                 elif abs(no18_target - no_price) < 0.0001 and no18_target > 0:
@@ -4318,26 +4572,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Nineteenth_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes18和No18价格为0.00
-                    yes18_price_entry.delete(0, tk.END)
-                    yes18_price_entry.insert(0, "0.00")
-                    no18_price_entry.delete(0, tk.END)
-                    no18_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes19价格
-                    yes19_price_entry = self.yes_frame.grid_slaves(row=38, column=1)[0]
-                    yes19_price_entry.delete(0, tk.END)
-                    yes19_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 18",
-                        price=no_price,
-                        amount=float(no18_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes18和No18价格为0.00
+                        yes18_price_entry.delete(0, tk.END)
+                        yes18_price_entry.insert(0, "0.00")
+                        no18_price_entry.delete(0, tk.END)
+                        no18_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes19价格
+                        yes19_price_entry = self.yes_frame.grid_slaves(row=38, column=1)[0]
+                        yes19_price_entry.delete(0, tk.END)
+                        yes19_price_entry.insert(0, str(self.default_target_price))
+                        yes19_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 18",
+                            price=no_price,
+                            amount=float(no18_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Nineteenth_trade()
                 
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
@@ -4396,26 +4655,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twentieth_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes19和No19价格为0.00
-                    yes19_price_entry.delete(0, tk.END)
-                    yes19_price_entry.insert(0, "0.00")
-                    no19_price_entry.delete(0, tk.END)
-                    no19_price_entry.insert(0, "0.00")
-                    
-                    # 设置No20价格
-                    no20_price_entry = self.no_frame.grid_slaves(row=40, column=1)[0]
-                    no20_price_entry.delete(0, tk.END)
-                    no20_price_entry.insert(0, "0.53")
-
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 19",
-                        price=yes_price,
-                        amount=float(yes19_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes19和No19价格为0.00
+                        yes19_price_entry.delete(0, tk.END)
+                        yes19_price_entry.insert(0, "0.00")
+                        no19_price_entry.delete(0, tk.END)
+                        no19_price_entry.insert(0, "0.00")
+                        
+                        # 设置No20价格
+                        no20_price_entry = self.no_frame.grid_slaves(row=40, column=1)[0]
+                        no20_price_entry.delete(0, tk.END)
+                        no20_price_entry.insert(0, str(self.default_target_price))
+                        no20_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 19",
+                            price=yes_price,
+                            amount=float(yes19_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twentieth_trade()
                 
                 # 检查No19价格匹配
                 elif abs(no19_target - no_price) < 0.0001 and no19_target > 0:
@@ -4428,26 +4692,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twentieth_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes19和No19价格为0.00
-                    yes19_price_entry.delete(0, tk.END)
-                    yes19_price_entry.insert(0, "0.00")
-                    no19_price_entry.delete(0, tk.END)
-                    no19_price_entry.insert(0, "0.00")
-                    
-                    # 设置YES20价格
-                    yes20_price_entry = self.yes_frame.grid_slaves(row=40, column=1)[0]
-                    yes20_price_entry.delete(0, tk.END)
-                    yes20_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 19",
-                        price=no_price,
-                        amount=float(no19_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes19和No19价格为0.00
+                        yes19_price_entry.delete(0, tk.END)
+                        yes19_price_entry.insert(0, "0.00")
+                        no19_price_entry.delete(0, tk.END)
+                        no19_price_entry.insert(0, "0.00")
+                        
+                        # 设置YES20价格
+                        yes20_price_entry = self.yes_frame.grid_slaves(row=40, column=1)[0]
+                        yes20_price_entry.delete(0, tk.END)
+                        yes20_price_entry.insert(0, str(self.default_target_price))
+                        yes20_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 19",
+                            price=no_price,
+                            amount=float(no19_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twentieth_trade()
                 
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
@@ -4506,26 +4775,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_First_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes20和No20价格为0.00
-                    yes20_price_entry.delete(0, tk.END)
-                    yes20_price_entry.insert(0, "0.00")
-                    no20_price_entry.delete(0, tk.END)
-                    no20_price_entry.insert(0, "0.00")
-                    
-                    # 设置No21价格
-                    no21_price_entry = self.no_frame.grid_slaves(row=42, column=1)[0]
-                    no21_price_entry.delete(0, tk.END)
-                    no21_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 20",
-                        price=yes_price,
-                        amount=float(yes20_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes20和No20价格为0.00
+                        yes20_price_entry.delete(0, tk.END)
+                        yes20_price_entry.insert(0, "0.00")
+                        no20_price_entry.delete(0, tk.END)
+                        no20_price_entry.insert(0, "0.00")
+                        
+                        # 设置No21价格
+                        no21_price_entry = self.no_frame.grid_slaves(row=42, column=1)[0]
+                        no21_price_entry.delete(0, tk.END)
+                        no21_price_entry.insert(0, str(self.default_target_price))
+                        no21_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 20",
+                            price=yes_price,
+                            amount=float(yes20_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_First_trade()
                 
                 # 检查No20价格匹配
                 elif abs(no20_target - no_price) < 0.0001 and no20_target > 0:
@@ -4538,26 +4812,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_First_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes20和No20价格为0.00
-                    yes20_price_entry.delete(0, tk.END)
-                    yes20_price_entry.insert(0, "0.00")
-                    no20_price_entry.delete(0, tk.END)
-                    no20_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes21价格
-                    yes21_price_entry = self.yes_frame.grid_slaves(row=42, column=1)[0]
-                    yes21_price_entry.delete(0, tk.END)
-                    yes21_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 20",
-                        price=no_price,
-                        amount=float(no20_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes20和No20价格为0.00
+                        yes20_price_entry.delete(0, tk.END)
+                        yes20_price_entry.insert(0, "0.00")
+                        no20_price_entry.delete(0, tk.END)
+                        no20_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes21价格
+                        yes21_price_entry = self.yes_frame.grid_slaves(row=42, column=1)[0]
+                        yes21_price_entry.delete(0, tk.END)
+                        yes21_price_entry.insert(0, str(self.default_target_price))
+                        yes21_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 20",
+                            price=no_price,
+                            amount=float(no20_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_First_trade()
                 
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
@@ -4616,26 +4895,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Second_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes21和No21价格为0.00
-                    yes21_price_entry.delete(0, tk.END)
-                    yes21_price_entry.insert(0, "0.00")
-                    no21_price_entry.delete(0, tk.END)
-                    no21_price_entry.insert(0, "0.00")
-                    
-                    # 设置No22价格
-                    no22_price_entry = self.no_frame.grid_slaves(row=44, column=1)[0]
-                    no22_price_entry.delete(0, tk.END)
-                    no22_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 21",
-                        price=yes_price,
-                        amount=float(yes21_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes21和No21价格为0.00
+                        yes21_price_entry.delete(0, tk.END)
+                        yes21_price_entry.insert(0, "0.00")
+                        no21_price_entry.delete(0, tk.END)
+                        no21_price_entry.insert(0, "0.00")
+                        
+                        # 设置No22价格
+                        no22_price_entry = self.no_frame.grid_slaves(row=44, column=1)[0]
+                        no22_price_entry.delete(0, tk.END)
+                        no22_price_entry.insert(0, str(self.default_target_price))
+                        no22_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 21",
+                            price=yes_price,
+                            amount=float(yes21_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Second_trade()
                 
                 # 检查No21价格匹配
                 elif abs(no21_target - no_price) < 0.0001 and no21_target > 0:
@@ -4648,26 +4932,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Second_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes21和No21价格为0.00
-                    yes21_price_entry.delete(0, tk.END)
-                    yes21_price_entry.insert(0, "0.00")
-                    no21_price_entry.delete(0, tk.END)
-                    no21_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes22价格
-                    yes22_price_entry = self.yes_frame.grid_slaves(row=44, column=1)[0]
-                    yes22_price_entry.delete(0, tk.END)
-                    yes22_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 21",
-                        price=no_price,
-                        amount=float(no21_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes21和No21价格为0.00
+                        yes21_price_entry.delete(0, tk.END)
+                        yes21_price_entry.insert(0, "0.00")
+                        no21_price_entry.delete(0, tk.END)
+                        no21_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes22价格
+                        yes22_price_entry = self.yes_frame.grid_slaves(row=44, column=1)[0]
+                        yes22_price_entry.delete(0, tk.END)
+                        yes22_price_entry.insert(0, str(self.default_target_price))
+                        yes22_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 21",
+                            price=no_price,
+                            amount=float(no21_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Second_trade()
                 
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
@@ -4726,26 +5015,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Third_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes22和No22价格为0.00
-                    yes22_price_entry.delete(0, tk.END)
-                    yes22_price_entry.insert(0, "0.00")
-                    no22_price_entry.delete(0, tk.END)
-                    no22_price_entry.insert(0, "0.00")
-                    
-                    # 设置No23价格
-                    no23_price_entry = self.no_frame.grid_slaves(row=46, column=1)[0]
-                    no23_price_entry.delete(0, tk.END)
-                    no23_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 22",
-                        price=yes_price,
-                        amount=float(yes22_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes22和No22价格为0.00
+                        yes22_price_entry.delete(0, tk.END)
+                        yes22_price_entry.insert(0, "0.00")
+                        no22_price_entry.delete(0, tk.END)
+                        no22_price_entry.insert(0, "0.00")
+                        
+                        # 设置No23价格
+                        no23_price_entry = self.no_frame.grid_slaves(row=46, column=1)[0]
+                        no23_price_entry.delete(0, tk.END)
+                        no23_price_entry.insert(0, str(self.default_target_price))
+                        no23_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 22",
+                            price=yes_price,
+                            amount=float(yes22_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Third_trade()
                 
                 # 检查No22价格匹配
                 elif abs(no22_target - no_price) < 0.0001 and no22_target > 0:
@@ -4758,26 +5052,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Third_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes22和No22价格为0.00
-                    yes22_price_entry.delete(0, tk.END)
-                    yes22_price_entry.insert(0, "0.00")
-                    no22_price_entry.delete(0, tk.END)
-                    no22_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes23价格
-                    yes23_price_entry = self.yes_frame.grid_slaves(row=46, column=1)[0]
-                    yes23_price_entry.delete(0, tk.END)
-                    yes23_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 22",
-                        price=no_price,
-                        amount=float(no22_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes22和No22价格为0.00
+                        yes22_price_entry.delete(0, tk.END)
+                        yes22_price_entry.insert(0, "0.00")
+                        no22_price_entry.delete(0, tk.END)
+                        no22_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes23价格
+                        yes23_price_entry = self.yes_frame.grid_slaves(row=46, column=1)[0]
+                        yes23_price_entry.delete(0, tk.END)
+                        yes23_price_entry.insert(0, str(self.default_target_price))
+                        yes23_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 22",
+                            price=no_price,
+                            amount=float(no22_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Third_trade()
                 
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
@@ -4836,26 +5135,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Fourth_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes23和No23价格为0.00
-                    yes23_price_entry.delete(0, tk.END)
-                    yes23_price_entry.insert(0, "0.00")
-                    no23_price_entry.delete(0, tk.END)
-                    no23_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes24价格
-                    yes24_price_entry = self.yes_frame.grid_slaves(row=48, column=1)[0]
-                    yes24_price_entry.delete(0, tk.END)
-                    yes24_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 23",
-                        price=yes_price,
-                        amount=float(yes23_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes23和No23价格为0.00
+                        yes23_price_entry.delete(0, tk.END)
+                        yes23_price_entry.insert(0, "0.00")
+                        no23_price_entry.delete(0, tk.END)
+                        no23_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes24价格
+                        yes24_price_entry = self.yes_frame.grid_slaves(row=48, column=1)[0]
+                        yes24_price_entry.delete(0, tk.END)
+                        yes24_price_entry.insert(0, str(self.default_target_price))
+                        yes24_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 23",
+                            price=yes_price,
+                            amount=float(yes23_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Fourth_trade()
                 
                 # 检查No23价格匹配
                 elif abs(no23_target - no_price) < 0.0001 and no23_target > 0:
@@ -4868,26 +5172,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Fourth_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes23和No23价格为0.00
-                    yes23_price_entry.delete(0, tk.END)
-                    yes23_price_entry.insert(0, "0.00")
-                    no23_price_entry.delete(0, tk.END)
-                    no23_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes24价格
-                    yes24_price_entry = self.yes_frame.grid_slaves(row=48, column=1)[0]
-                    yes24_price_entry.delete(0, tk.END)
-                    yes24_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 23",
-                        price=no_price,
-                        amount=float(no23_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes23和No23价格为0.00
+                        yes23_price_entry.delete(0, tk.END)
+                        yes23_price_entry.insert(0, "0.00")
+                        no23_price_entry.delete(0, tk.END)
+                        no23_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes24价格
+                        yes24_price_entry = self.yes_frame.grid_slaves(row=48, column=1)[0]
+                        yes24_price_entry.delete(0, tk.END)
+                        yes24_price_entry.insert(0, str(self.default_target_price))
+                        yes24_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 23",
+                            price=no_price,
+                            amount=float(no23_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Fourth_trade()
                 
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
@@ -4946,26 +5255,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Fifth_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes24和No24价格为0.00
-                    yes24_price_entry.delete(0, tk.END)
-                    yes24_price_entry.insert(0, "0.00")
-                    no24_price_entry.delete(0, tk.END)
-                    no24_price_entry.insert(0, "0.00")
-                    
-                    # 设置No25价格
-                    no25_price_entry = self.no_frame.grid_slaves(row=50, column=1)[0]
-                    no25_price_entry.delete(0, tk.END)
-                    no25_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 24",
-                        price=yes_price,
-                        amount=float(yes24_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes24和No24价格为0.00
+                        yes24_price_entry.delete(0, tk.END)
+                        yes24_price_entry.insert(0, "0.00")
+                        no24_price_entry.delete(0, tk.END)
+                        no24_price_entry.insert(0, "0.00")
+                        
+                        # 设置No25价格
+                        no25_price_entry = self.no_frame.grid_slaves(row=50, column=1)[0]
+                        no25_price_entry.delete(0, tk.END)
+                        no25_price_entry.insert(0, str(self.default_target_price))
+                        no25_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 24",
+                            price=yes_price,
+                            amount=float(yes24_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Fifth_trade()
                 
                 # 检查No24价格匹配
                 elif abs(no24_target - no_price) < 0.0001 and no24_target > 0:
@@ -4978,26 +5292,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Fifth_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes24和No24价格为0.00
-                    yes24_price_entry.delete(0, tk.END)
-                    yes24_price_entry.insert(0, "0.00")
-                    no24_price_entry.delete(0, tk.END)
-                    no24_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes25价格
-                    yes25_price_entry = self.yes_frame.grid_slaves(row=50, column=1)[0]
-                    yes25_price_entry.delete(0, tk.END)
-                    yes25_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 24",
-                        price=no_price,
-                        amount=float(no24_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes24和No24价格为0.00
+                        yes24_price_entry.delete(0, tk.END)
+                        yes24_price_entry.insert(0, "0.00")
+                        no24_price_entry.delete(0, tk.END)
+                        no24_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes25价格
+                        yes25_price_entry = self.yes_frame.grid_slaves(row=50, column=1)[0]
+                        yes25_price_entry.delete(0, tk.END)
+                        yes25_price_entry.insert(0, str(self.default_target_price))
+                        yes25_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 24",
+                            price=no_price,
+                            amount=float(no24_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Fifth_trade()
                 
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
@@ -5056,26 +5375,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Sixth_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes25和No25价格为0.00
-                    yes25_price_entry.delete(0, tk.END)
-                    yes25_price_entry.insert(0, "0.00")
-                    no25_price_entry.delete(0, tk.END)
-                    no25_price_entry.insert(0, "0.00")
-                    
-                    # 设置No26价格
-                    no26_price_entry = self.no_frame.grid_slaves(row=52, column=1)[0]
-                    no26_price_entry.delete(0, tk.END)
-                    no26_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 25",
-                        price=yes_price,
-                        amount=float(yes25_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes25和No25价格为0.00
+                        yes25_price_entry.delete(0, tk.END)
+                        yes25_price_entry.insert(0, "0.00")
+                        no25_price_entry.delete(0, tk.END)
+                        no25_price_entry.insert(0, "0.00")
+                        
+                        # 设置No26价格
+                        no26_price_entry = self.no_frame.grid_slaves(row=52, column=1)[0]
+                        no26_price_entry.delete(0, tk.END)
+                        no26_price_entry.insert(0, str(self.default_target_price))
+                        no26_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 25",
+                            price=yes_price,
+                            amount=float(yes25_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Fifth_trade()
                 
                 # 检查No25价格匹配
                 elif abs(no25_target - no_price) < 0.0001 and no25_target > 0:
@@ -5088,26 +5412,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Sixth_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes25和No25价格为0.00
-                    yes25_price_entry.delete(0, tk.END)
-                    yes25_price_entry.insert(0, "0.00")
-                    no25_price_entry.delete(0, tk.END)
-                    no25_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes26价格
-                    yes26_price_entry = self.yes_frame.grid_slaves(row=52, column=1)[0]
-                    yes26_price_entry.delete(0, tk.END)
-                    yes26_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 25",
-                        price=no_price,
-                        amount=float(no25_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes25和No25价格为0.00
+                        yes25_price_entry.delete(0, tk.END)
+                        yes25_price_entry.insert(0, "0.00")
+                        no25_price_entry.delete(0, tk.END)
+                        no25_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes26价格
+                        yes26_price_entry = self.yes_frame.grid_slaves(row=52, column=1)[0]
+                        yes26_price_entry.delete(0, tk.END)
+                        yes26_price_entry.insert(0, str(self.default_target_price))
+                        yes26_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 25",
+                            price=no_price,
+                            amount=float(no25_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Sixth_trade()
                 
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
@@ -5166,26 +5495,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Seventh_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes26和No26价格为0.00
-                    yes26_price_entry.delete(0, tk.END)
-                    yes26_price_entry.insert(0, "0.00")
-                    no26_price_entry.delete(0, tk.END)
-                    no26_price_entry.insert(0, "0.00")
-                    
-                    # 设置No27价格
-                    no27_price_entry = self.no_frame.grid_slaves(row=54, column=1)[0]
-                    no27_price_entry.delete(0, tk.END)
-                    no27_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 26",
-                        price=yes_price,
-                        amount=float(yes26_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes26和No26价格为0.00
+                        yes26_price_entry.delete(0, tk.END)
+                        yes26_price_entry.insert(0, "0.00")
+                        no26_price_entry.delete(0, tk.END)
+                        no26_price_entry.insert(0, "0.00")
+                        
+                        # 设置No27价格
+                        no27_price_entry = self.no_frame.grid_slaves(row=54, column=1)[0]
+                        no27_price_entry.delete(0, tk.END)
+                        no27_price_entry.insert(0, str(self.default_target_price))
+                        no27_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 26",
+                            price=yes_price,
+                            amount=float(yes26_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Sixth_trade()
                 
                 # 检查No26价格匹配
                 elif abs(no26_target - no_price) < 0.0001 and no26_target > 0:
@@ -5198,26 +5532,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Seventh_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes26和No26价格为0.00
-                    yes26_price_entry.delete(0, tk.END)
-                    yes26_price_entry.insert(0, "0.00")
-                    no26_price_entry.delete(0, tk.END)
-                    no26_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes27价格
-                    yes27_price_entry = self.yes_frame.grid_slaves(row=54, column=1)[0]
-                    yes27_price_entry.delete(0, tk.END)
-                    yes27_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 26",
-                        price=no_price,
-                        amount=float(no26_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes26和No26价格为0.00
+                        yes26_price_entry.delete(0, tk.END)
+                        yes26_price_entry.insert(0, "0.00")
+                        no26_price_entry.delete(0, tk.END)
+                        no26_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes27价格
+                        yes27_price_entry = self.yes_frame.grid_slaves(row=54, column=1)[0]
+                        yes27_price_entry.delete(0, tk.END)
+                        yes27_price_entry.insert(0, str(self.default_target_price))
+                        yes27_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 26",
+                            price=no_price,
+                            amount=float(no26_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Seventh_trade()
                 
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
@@ -5276,26 +5615,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Eighth_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes27和No27价格为0.00
-                    yes27_price_entry.delete(0, tk.END)
-                    yes27_price_entry.insert(0, "0.00")
-                    no27_price_entry.delete(0, tk.END)
-                    no27_price_entry.insert(0, "0.00")
-                    
-                    # 设置No28价格
-                    no28_price_entry = self.no_frame.grid_slaves(row=56, column=1)[0]
-                    no28_price_entry.delete(0, tk.END)
-                    no28_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 27",
-                        price=yes_price,
-                        amount=float(yes27_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes27和No27价格为0.00
+                        yes27_price_entry.delete(0, tk.END)
+                        yes27_price_entry.insert(0, "0.00")
+                        no27_price_entry.delete(0, tk.END)
+                        no27_price_entry.insert(0, "0.00")
+                        
+                        # 设置No28价格
+                        no28_price_entry = self.no_frame.grid_slaves(row=56, column=1)[0]
+                        no28_price_entry.delete(0, tk.END)
+                        no28_price_entry.insert(0, str(self.default_target_price))
+                        no28_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 27",
+                            price=yes_price,
+                            amount=float(yes27_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Seventh_trade()
                 
                 # 检查No27价格匹配
                 elif abs(no27_target - no_price) < 0.0001 and no27_target > 0:
@@ -5308,26 +5652,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Eighth_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes27和No27价格为0.00
-                    yes27_price_entry.delete(0, tk.END)
-                    yes27_price_entry.insert(0, "0.00")
-                    no27_price_entry.delete(0, tk.END)
-                    no27_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes28价格
-                    yes28_price_entry = self.yes_frame.grid_slaves(row=56, column=1)[0]
-                    yes28_price_entry.delete(0, tk.END)
-                    yes28_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 27",
-                        price=no_price,
-                        amount=float(no27_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes27和No27价格为0.00
+                        yes27_price_entry.delete(0, tk.END)
+                        yes27_price_entry.insert(0, "0.00")
+                        no27_price_entry.delete(0, tk.END)
+                        no27_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes28价格
+                        yes28_price_entry = self.yes_frame.grid_slaves(row=56, column=1)[0]
+                        yes28_price_entry.delete(0, tk.END)
+                        yes28_price_entry.insert(0, str(self.default_target_price))
+                        yes28_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 27",
+                            price=no_price,
+                            amount=float(no27_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Eighth_trade()
                 
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
@@ -5386,26 +5735,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Ninth_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes28和No28价格为0.00
-                    yes28_price_entry.delete(0, tk.END)
-                    yes28_price_entry.insert(0, "0.00")
-                    no28_price_entry.delete(0, tk.END)
-                    no28_price_entry.insert(0, "0.00")
-                    
-                    # 设置No29价格
-                    no29_price_entry = self.no_frame.grid_slaves(row=58, column=1)[0]
-                    no29_price_entry.delete(0, tk.END)
-                    no29_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 28",
-                        price=yes_price,
-                        amount=float(yes28_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes28和No28价格为0.00
+                        yes28_price_entry.delete(0, tk.END)
+                        yes28_price_entry.insert(0, "0.00")
+                        no28_price_entry.delete(0, tk.END)
+                        no28_price_entry.insert(0, "0.00")
+                        
+                        # 设置No29价格
+                        no29_price_entry = self.no_frame.grid_slaves(row=58, column=1)[0]
+                        no29_price_entry.delete(0, tk.END)
+                        no29_price_entry.insert(0, str(self.default_target_price))
+                        no29_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 28",
+                            price=yes_price,
+                            amount=float(yes28_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Ninth_trade()
                 
                 # 检查No28价格匹配
                 elif abs(no28_target - no_price) < 0.0001 and no28_target > 0:
@@ -5418,26 +5772,31 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Twenty_Ninth_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes28和No28价格为0.00
-                    yes28_price_entry.delete(0, tk.END)
-                    yes28_price_entry.insert(0, "0.00")
-                    no28_price_entry.delete(0, tk.END)
-                    no28_price_entry.insert(0, "0.00")
-                    
-                    # 设置Yes29价格
-                    yes29_price_entry = self.yes_frame.grid_slaves(row=58, column=1)[0]
-                    yes29_price_entry.delete(0, tk.END)
-                    yes29_price_entry.insert(0, "0.53")
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 28",
-                        price=no_price,
-                        amount=float(no28_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes28和No28价格为0.00
+                        yes28_price_entry.delete(0, tk.END)
+                        yes28_price_entry.insert(0, "0.00")
+                        no28_price_entry.delete(0, tk.END)
+                        no28_price_entry.insert(0, "0.00")
+                        
+                        # 设置Yes29价格
+                        yes29_price_entry = self.yes_frame.grid_slaves(row=58, column=1)[0]
+                        yes29_price_entry.delete(0, tk.END)
+                        yes29_price_entry.insert(0, str(self.default_target_price))
+                        yes29_price_entry.configure(fg='red')  # 添加红色设置
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 28",
+                            price=no_price,
+                            amount=float(no28_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Twenty_Ninth_trade()
                 
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
@@ -5496,23 +5855,27 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Thirtieth_trade")
-                    self.only_sell_no()
-                    
-                    # 重置Yes29和No29价格为0.00
-                    yes29_price_entry.delete(0, tk.END)
-                    yes29_price_entry.insert(0, "0.00")
-                    no29_price_entry.delete(0, tk.END)
-                    no29_price_entry.insert(0, "0.00")
-                    
-                    # 最后一次交易不需要设置下一次价格
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy Yes 29",
-                        price=yes_price,
-                        amount=float(yes29_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_yes():
+                        self.only_sell_no()
+                        
+                        # 重置Yes29和No29价格为0.00
+                        yes29_price_entry.delete(0, tk.END)
+                        yes29_price_entry.insert(0, "0.00")
+                        no29_price_entry.delete(0, tk.END)
+                        no29_price_entry.insert(0, "0.00")
+                        
+                        # 最后一次交易不需要设置下一次价格
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy Yes 29",
+                            price=yes_price,
+                            amount=float(yes29_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Thirtieth_trade()
                 
                 # 检查No29价格匹配
                 elif abs(no29_target - no_price) < 0.0001 and no29_target > 0:
@@ -5525,23 +5888,27 @@ class CryptoTrader:
                     time.sleep(1)
                     self._handle_metamask_popup()
                     self.sleep_refresh("Thirtieth_trade")
-                    self.only_sell_yes()
-                    
-                    # 重置Yes29和No29价格为0.00
-                    yes29_price_entry.delete(0, tk.END)
-                    yes29_price_entry.insert(0, "0.00")
-                    no29_price_entry.delete(0, tk.END)
-                    no29_price_entry.insert(0, "0.00")
-                    
-                    # 最后一次交易不需要设置下一次价格
-                    
-                    self.trade_count += 1
-                    self.send_trade_email(
-                        trade_type="Buy No 29",
-                        price=no_price,
-                        amount=float(no29_price_entry.get()),
-                        trade_count=self.trade_count
-                    )
+                    if self.Verify_trade_no():
+                        self.only_sell_yes()
+                        
+                        # 重置Yes29和No29价格为0.00
+                        yes29_price_entry.delete(0, tk.END)
+                        yes29_price_entry.insert(0, "0.00")
+                        no29_price_entry.delete(0, tk.END)
+                        no29_price_entry.insert(0, "0.00")
+                        
+                        # 最后一次交易不需要设置下一次价格
+                        
+                        self.trade_count += 1
+                        self.send_trade_email(
+                            trade_type="Buy No 29",
+                            price=no_price,
+                            amount=float(no29_price_entry.get()),
+                            trade_count=self.trade_count
+                        )
+                    else:
+                        self.logger.warning("交易失败,请重新自行交易")
+                        return self.Thirtieth_trade()
                 
         except ValueError as e:
             self.logger.error(f"价格转换错误: {str(e)}")
@@ -5579,12 +5946,12 @@ class CryptoTrader:
             if prices['yes'] is not None:
                 yes_price = float(prices['yes']) / 100
                 
-                # 获取Yes14价格
-                yes14_price_entry = self.yes_frame.grid_slaves(row=28, column=1)[0]
-                yes14_target = float(yes14_price_entry.get())
+                # 获取Yes30价格
+                yes30_price_entry = self.yes_frame.grid_slaves(row=60, column=1)[0]
+                yes30_target = float(yes30_price_entry.get())
                 
-                # 检查Yes14价格匹配
-                if abs(yes14_target - yes_price) < 0.0001 and yes14_target > 0:
+                # 检查Yes30价格匹配
+                if abs(yes30_target - yes_price) < 0.0001 and yes30_target > 0:
                     # ... 执行卖出操作 ...
                     self.position_sell_yes_button.invoke()
                     time.sleep(0.5)
@@ -5647,13 +6014,13 @@ class CryptoTrader:
             if prices['no'] is not None:
                 no_price = float(prices['no']) / 100
                 
-                # 获取No14价格
-                no14_price_entry = self.no_frame.grid_slaves(row=28, column=1)[0]
-                no14_target = float(no14_price_entry.get())
+                # 获取No30价格
+                no30_price_entry = self.no_frame.grid_slaves(row=60, column=1)[0]
+                no30_target = float(no30_price_entry.get())
                 
-                # 检查No14价格匹配
-                if abs(no14_target - no_price) < 0.0001 and no14_target > 0:
-                    self.logger.info("No14价格匹配,执行自动卖出")
+                # 检查No30价格匹配
+                if abs(no30_target - no_price) < 0.0001 and no30_target > 0:
+                    self.logger.info("No30价格匹配,执行自动卖出")
                     # 点击Positions-Sell-No按钮
                     self.position_sell_no_button.invoke()
                     time.sleep(0.5)
@@ -5685,9 +6052,9 @@ class CryptoTrader:
                 
                     # 设置初始价格
                     self.yes_price_entry.delete(0, tk.END)
-                    self.yes_price_entry.insert(0, "0.53")
+                    self.yes_price_entry.insert(0, "0.52")
                     self.no_price_entry.delete(0, tk.END)
-                    self.no_price_entry.insert(0, "0.53")
+                    self.no_price_entry.insert(0, "0.52")
                     
                     """# 在所有操作完成后,优雅退出并重启
                     self.logger.info("准备重启程序...")
@@ -5697,6 +6064,82 @@ class CryptoTrader:
             self.update_status(f"Sell_no执行失败: {str(e)}")
         finally:
             self.is_trading = False
+
+    def Verify_trade_yes(self):
+        """
+        验证交易是否成功完成
+        Returns:
+        bool: 交易是否成功
+        """
+        try:
+            # 等待并检查是否存在 Yes 标签
+            yes_element = WebDriverWait(self.driver, 5).until(
+                EC.presence_of_element_located((By.XPATH, 
+                    '//div[@class="c-dhzjXW c-chKWaB c-chKWaB-eVTycx-color-green c-dhzjXW-ibxvuTL-css" and text()="Yes"]'))
+            )
+            if yes_element.text == "Yes":
+                self.logger.info("交易验证成功")
+                return True        
+        except Exception as e:
+            self.logger.warning(f"交易验证失败: {str(e)}")
+            return False
+        
+    def Verify_trade_no(self):
+        """
+        验证交易是否成功完成
+        Returns:
+        bool: 交易是否成功
+        """
+        try:
+            # 等待并检查是否存在 No 标签
+            no_element = WebDriverWait(self.driver, 5).until(
+                EC.presence_of_element_located((By.XPATH, 
+                    '//div[@class="c-dhzjXW c-chKWaB c-chKWaB-kNNGp-color-red c-dhzjXW-ibxvuTL-css" and text()="No"]'))
+            )
+            if no_element.text == "No":
+                self.logger.info("交易验证成功")
+                return True        
+        except Exception as e:
+            self.logger.warning(f"交易验证失败: {str(e)}")
+            return False
+
+    def Verify_only_sell_yes(self):
+        """
+        验证交易是否成功完成
+        Returns:
+        bool: 交易是否成功
+        """
+        try:
+            # 等待并检查是否存在 Yes 标签
+            yes_element = WebDriverWait(self.driver, 5).until(
+                EC.presence_of_element_located((By.XPATH, 
+                    '//div[@class="c-dhzjXW c-chKWaB c-chKWaB-eVTycx-color-green c-dhzjXW-ibxvuTL-css" and text()="Yes"]'))
+            )
+            if yes_element.text == "Yes":
+                self.logger.info("Yes 仓位仍然存在，卖出失败")
+                return False   
+        except Exception as e:
+            self.logger.warning(f"卖出成功: {str(e)}")
+            return True
+        
+    def Verify_only_sell_no(self):
+        """
+        验证交易是否成功完成
+        Returns:
+        bool: 交易是否成功
+        """
+        try:
+            # 等待并检查是否存在 No 标签
+            no_element = WebDriverWait(self.driver, 5).until(
+                EC.presence_of_element_located((By.XPATH, 
+                    '//div[@class="c-dhzjXW c-chKWaB c-chKWaB-kNNGp-color-red c-dhzjXW-ibxvuTL-css" and text()="No"]'))
+            )
+            if no_element.text == "No":
+                self.logger.info("No 仓位仍然存在，卖出失败")
+                return False        
+        except Exception as e:
+            self.logger.warning(f"卖出成功: {str(e)}")
+            return True   
     
     def only_sell_yes(self):
         """只卖出YES"""
@@ -5704,10 +6147,16 @@ class CryptoTrader:
         time.sleep(0.5)
         self.sell_profit_button.invoke()
         time.sleep(1)
-        
+        # 执行等待和刷新
+        self.sleep_refresh("only_sell_yes")
+
+        if not self.Verify_only_sell_yes():
+            self.logger.warning("卖出验证失败，重试")
+            return self.only_sell_yes()
+                
         # 增加卖出计数
         self.sell_count += 1
-        
+            
         # 发送交易邮件 - 卖出YES
         self.send_trade_email(
             trade_type="Sell Yes Final",
@@ -5715,19 +6164,23 @@ class CryptoTrader:
             amount=0.0,  # 卖出时金额为总持仓
             trade_count=self.sell_count  # 使用卖出计数器
         )
-        # 执行等待和刷新
-        self.sleep_refresh("only_sell_yes")
-
+        
     def only_sell_no(self):
         """只卖出NO"""
         self.position_sell_no_button.invoke()
         time.sleep(0.5)
         self.sell_profit_button.invoke()
         time.sleep(1)
+        # 执行等待和刷新
+        self.sleep_refresh("only_sell_no")
         
+        if not self.Verify_only_sell_no():
+            self.logger.warning("卖出验证失败，重试")
+            return self.only_sell_no()
+            
         # 增加卖出计数
         self.sell_count += 1
-        
+            
         # 发送交易邮件 - 卖出NO
         self.send_trade_email(
             trade_type="Sell No Final",
@@ -5735,9 +6188,7 @@ class CryptoTrader:
             amount=0.0,  # 卖出时金额为总持仓
             trade_count=self.sell_count  # 使用卖出计数器
         )
-        # 执行等待和刷新
-        self.sleep_refresh("only_sell_no")
-    
+          
     def send_trade_email(self, trade_type, price, amount, trade_count):
         """发送交易邮件"""
         max_retries = 3
@@ -5781,7 +6232,7 @@ class CryptoTrader:
                 
                 # 使用126.com的SMTP服务器
                 server = smtplib.SMTP_SSL('smtp.126.com', 465, timeout=5)  # 使用SSL连接
-                server.set_debuglevel(1)
+                server.set_debuglevel(0)
                 
                 try:
                     server.login(sender, app_password)
@@ -5882,9 +6333,9 @@ class CryptoTrader:
             operation_name (str): 操作名称,用于日志记录
         """
         try:
-            for i in range(3):  # 重复次数，修改数字即可
+            for i in range(4):  # 重复次数，修改数字即可
                 self.logger.info(f"{operation_name} - 等待3秒后刷新页面 ({i+1}/4)")
-                time.sleep(5)  # 等待5秒
+                time.sleep(6)  # 等待6秒
                 self.driver.refresh()  # 刷新页面       
         except Exception as e:
             self.logger.error(f"{operation_name} - sleep_refresh操作失败: {str(e)}")
@@ -5893,7 +6344,10 @@ class CryptoTrader:
         """执行登录操作"""
         try:
             self.logger.info("开始执行登录操作...")
-            
+            # 等待 2秒
+            time.sleep(2)
+            # 刷新页面
+            self.driver.refresh()
             # 点击登录按钮
             login_button = self.driver.find_element(By.XPATH, 
                 '//*[@id="__pm_viewport"]/nav[1]/div[1]/div[3]/div/nav/div/ul/div[1]/div/button')
@@ -5939,6 +6393,81 @@ class CryptoTrader:
         except Exception as e:
             self.logger.error(f"登录操作失败: {str(e)}")
             return False
+        
+    def set_default_price(self, price):
+        """设置默认目标价格"""
+        try:
+            self.default_target_price = float(price)
+            self.yes_price_entry.delete(0, tk.END)
+            self.yes_price_entry.insert(0, str(self.default_target_price))
+            self.no_price_entry.delete(0, tk.END)
+            self.no_price_entry.insert(0, str(self.default_target_price))
+            self.logger.info(f"默认目标价格已更新为: {price}")
+        except ValueError:
+            self.logger.error("价格设置无效，请输入有效数字")
+
+    def set_amount_values(self, button_value):
+        """根据按钮值设置相应的金额参数"""
+        try:
+            # 创建和配置样式
+            style = ttk.Style()
+            
+            # 配置输入框样式
+            style.configure('Red.TEntry', 
+                background='white',  # 背景色
+                fieldbackground='white',  # 输入区域背景色
+                selectbackground='#e6e6e6',  # 选中时的背景色
+                selectforeground='red',  # 选中时的前景色
+                insertcolor='red'  # 光标颜色
+            )
+            
+            # 配置按钮样式
+            style.configure('Red.TButton', 
+                background='white',
+                foreground='red'
+            )
+            
+            settings = {
+                "10": {"initial": "15", "first_rebound": "160", "n_rebound": "112", "profit_rate": "19"},
+                "12": {"initial": "11.8", "first_rebound": "160", "n_rebound": "112", "profit_rate": "15"},
+                "16": {"initial": "7", "first_rebound": "160", "n_rebound": "112", "profit_rate": "9"},
+                "18": {"initial": "5.5", "first_rebound": "160", "n_rebound": "112", "profit_rate": "7"},
+                "20": {"initial": "4.3", "first_rebound": "160", "n_rebound": "112", "profit_rate": "5"},
+                "22": {"initial": "3.4", "first_rebound": "160", "n_rebound": "112", "profit_rate": "4"}
+            }
+            
+            if button_value in settings:
+                values = settings[button_value]
+                
+                # 更新输入框值和样式
+                entries = [
+                    (self.initial_amount_entry, values["initial"]),
+                    (self.first_rebound_entry, values["first_rebound"]),
+                    (self.n_rebound_entry, values["n_rebound"]),
+                    (self.profit_rate_entry, values["profit_rate"])
+                ]
+                
+                for entry, value in entries:
+                    entry.state(['!disabled'])  # 确保输入框可用
+                    entry.delete(0, 'end')
+                    entry.insert(0, value)
+                    entry.configure(style='Red.TEntry')
+                
+                # 更新按钮样式
+                for btn in self.trade_buttons.values():
+                    btn.configure(style='TButton')  # 重置所有按钮样式
+                self.trade_buttons[button_value].configure(style='Red.TButton')
+
+                # 更新窗口标题
+                title = f"Polymarket {button_value}次交易，{values['profit_rate']}%利润率！"
+                self.root.title(title)
+                
+                self.logger.info(f"已更新金额设置为 {button_value} 对应的值")
+                
+        except Exception as e:
+            self.logger.error(f"设置金额值时出错: {str(e)}")
+            import traceback
+            self.logger.error(traceback.format_exc())
 
 if __name__ == "__main__":
     try:
