@@ -346,9 +346,13 @@ class CryptoTrader:
         self.profit_rate_entry.insert(0, "11")
         self.profit_rate_entry.grid(row=0, column=7, padx=5, pady=5)
 
+        style = ttk.Style()
+        style.configure('Blue.TLabel', foreground='blue')
+        
         # 交易次数
-        ttk.Label(settings_container, text="交易次数:").grid(row=1, column=0, padx=5, pady=5)
-
+        ttk.Label(settings_container, text="交易次数:", style='Blue.TLabel').grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(settings_container, text="默认14次", style='Blue.TLabel').grid(row=1, column=7, padx=5, pady=5)
+        
         # 次数按钮
         self.trade_buttons = {}  # 保存按钮引用
         
