@@ -526,19 +526,19 @@ class CryptoTrader:
         config_frame.pack(fill="x", padx=5, pady=5)
         
         # 左右分栏显示Yes/No配置
-        self.yes_frame = ttk.LabelFrame(config_frame, text="Yes配置", padding=(5, 5))
+        self.yes_frame = ttk.LabelFrame(config_frame, text="Yes配置", padding=(3, 3))
         self.yes_frame.grid(row=0, column=0, padx=5, sticky="ew")
         config_frame.grid_columnconfigure(0, weight=1)
         
-        ttk.Label(self.yes_frame, text="Yes 0 价格($):", font=('Arial', 12)).grid(row=0, column=0, padx=5, pady=5)
+        ttk.Label(self.yes_frame, text="Yes 0 价格($):", font=('Arial', 12)).grid(row=0, column=0, padx=3, pady=3)
         self.yes_price_entry = ttk.Entry(self.yes_frame)
         self.yes_price_entry.insert(0, str(self.config['trading']['Yes0']['target_price']))
-        self.yes_price_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.yes_price_entry.grid(row=0, column=1, padx=3, pady=3, sticky="ew")
         
-        ttk.Label(self.yes_frame, text="Yes 0 金额:", font=('Arial', 12)).grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(self.yes_frame, text="Yes 0 金额:", font=('Arial', 12)).grid(row=1, column=0, padx=3, pady=3)
         self.yes_amount_entry = ttk.Entry(self.yes_frame)
         self.yes_amount_entry.insert(0, str(self.config['trading']['Yes0']['amount']))
-        self.yes_amount_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        self.yes_amount_entry.grid(row=1, column=1, padx=3, pady=3, sticky="ew")
 
         # 直接创建所有Yes Entry对象并设置默认值
         self.yes1_price_entry = tk.Entry(self.yes_frame)
@@ -792,6 +792,7 @@ class CryptoTrader:
             amount_entry = ttk.Entry(self.no_frame)
             amount_entry.insert(0, "0.0")  # 设置默认金额
             amount_entry.grid(row=i*2+1, column=1, padx=5, pady=5, sticky="ew")
+
         # 修改买入按钮区域
         buy_frame = ttk.LabelFrame(scrollable_frame, text="买入按钮", padding=(5, 5))
         buy_frame.pack(fill="x", padx=5, pady=5)
@@ -6071,6 +6072,8 @@ class CryptoTrader:
         Returns:
         bool: 交易是否成功
         """
+        time.sleep(2)
+        self.driver.refresh()
         try:
             # 等待并检查是否存在 Yes 标签
             yes_element = WebDriverWait(self.driver, 5).until(
@@ -6090,6 +6093,8 @@ class CryptoTrader:
         Returns:
         bool: 交易是否成功
         """
+        time.sleep(2)
+        self.driver.refresh()
         try:
             # 等待并检查是否存在 No 标签
             no_element = WebDriverWait(self.driver, 5).until(
@@ -6109,6 +6114,8 @@ class CryptoTrader:
         Returns:
         bool: 交易是否成功
         """
+        time.sleep(2)
+        self.driver.refresh()
         try:
             # 等待并检查是否存在 Yes 标签
             yes_element = WebDriverWait(self.driver, 5).until(
@@ -6128,6 +6135,8 @@ class CryptoTrader:
         Returns:
         bool: 交易是否成功
         """
+        time.sleep(2)
+        self.driver.refresh()
         try:
             # 等待并检查是否存在 No 标签
             no_element = WebDriverWait(self.driver, 5).until(
@@ -6146,8 +6155,9 @@ class CryptoTrader:
         self.position_sell_yes_button.invoke()
         time.sleep(0.5)
         self.sell_profit_button.invoke()
-        time.sleep(1)
+        time.sleep(2)
         # 执行等待和刷新
+        self.driver.refresh()
         self.sleep_refresh("only_sell_yes")
 
         if not self.Verify_only_sell_yes():
@@ -6170,7 +6180,8 @@ class CryptoTrader:
         self.position_sell_no_button.invoke()
         time.sleep(0.5)
         self.sell_profit_button.invoke()
-        time.sleep(1)
+        time.sleep(2)
+        self.driver.refresh()
         # 执行等待和刷新
         self.sleep_refresh("only_sell_no")
         
