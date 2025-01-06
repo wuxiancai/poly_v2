@@ -6347,6 +6347,8 @@ class CryptoTrader:
         Args:
             operation_name (str): 操作名称,用于日志记录
         """
+        time.sleep(4)
+        self.driver.refresh()
         try:
             for i in range(4):  # 重复次数，修改数字即可
                 self.logger.info(f"{operation_name} - 等待3秒后刷新页面 ({i+1}/4)")
