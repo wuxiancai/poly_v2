@@ -1308,7 +1308,7 @@ class CryptoTrader:
                 
                 # 继续监控
                 if self.running:
-                    self.login_check_timer = self.root.after(10000, check_login_status)  # 每10秒检查一次
+                    self.login_check_timer = self.root.after(20000, check_login_status)  # 每20秒检查一次
         
         # 开始第一次检查
         self.login_check_timer = self.root.after(20000, check_login_status)
