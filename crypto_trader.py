@@ -325,19 +325,19 @@ class CryptoTrader:
         # 初始金额设置
         ttk.Label(settings_container, text="初始金额(%):").grid(row=0, column=0, padx=5, pady=5)
         self.initial_amount_entry = ttk.Entry(settings_container, width=5)
-        self.initial_amount_entry.insert(0, "9")
+        self.initial_amount_entry.insert(0, "8")
         self.initial_amount_entry.grid(row=0, column=1, padx=5, pady=5)
         
         # 反水一次设置
         ttk.Label(settings_container, text="反水一次(%):").grid(row=0, column=2, padx=5, pady=5)
         self.first_rebound_entry = ttk.Entry(settings_container, width=5)
-        self.first_rebound_entry.insert(0, "150")
+        self.first_rebound_entry.insert(0, "140")
         self.first_rebound_entry.grid(row=0, column=3, padx=5, pady=5)
         
         # 反水N次设置
         ttk.Label(settings_container, text="反水N次(%):").grid(row=0, column=4, padx=5, pady=5)
         self.n_rebound_entry = ttk.Entry(settings_container, width=5)
-        self.n_rebound_entry.insert(0, "113")
+        self.n_rebound_entry.insert(0, "114")
         self.n_rebound_entry.grid(row=0, column=5, padx=5, pady=5)
 
         # 利润率设置
@@ -453,7 +453,7 @@ class CryptoTrader:
         self.update_amount_button['state'] = 'disabled'  # 初始禁用
 
         # 添加价格按钮
-        prices = ['0.51', '0.52', '0.53', '0.54']
+        prices = ['0.51', '0.52', '0.53-10次', '0.54']
         for price in prices:
             btn = ttk.Button(
                 button_frame, 
@@ -6445,8 +6445,8 @@ class CryptoTrader:
             )
             
             settings = {
-                "10": {"initial": "15", "first_rebound": "160", "n_rebound": "112", "profit_rate": "19"},
-                "12": {"initial": "11.8", "first_rebound": "160", "n_rebound": "112", "profit_rate": "15"},
+                "10": {"initial": "10", "first_rebound": "135", "n_rebound": "119", "profit_rate": "19"},
+                "12": {"initial": "8", "first_rebound": "150", "n_rebound": "117", "profit_rate": "15"},
                 "16": {"initial": "7", "first_rebound": "160", "n_rebound": "112", "profit_rate": "9"},
                 "18": {"initial": "5.5", "first_rebound": "160", "n_rebound": "112", "profit_rate": "7"},
                 "20": {"initial": "4.3", "first_rebound": "160", "n_rebound": "112", "profit_rate": "5"},
