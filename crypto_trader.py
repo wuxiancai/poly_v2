@@ -6347,7 +6347,7 @@ class CryptoTrader:
         Args:
             operation_name (str): 操作名称,用于日志记录
         """
-        time.sleep(2)
+        time.sleep(3)
         self.driver.refresh()
         try:
             for i in range(7):  # 重复次数，修改数字即可
