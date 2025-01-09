@@ -348,10 +348,10 @@ class CryptoTrader:
         self.profit_rate_entry.grid(row=0, column=7, padx=5, pady=5)
 
         # 翻倍周数
-        ttk.Label(settings_container, text="周翻倍").grid(row=0, column=9, padx=5, pady=5)
+        ttk.Label(settings_container, text="周翻倍").grid(row=0, column=9, padx=(0,5), pady=5)
         self.doubling_weeks_entry = ttk.Entry(settings_container, width=5, style='Red.TEntry')
         self.doubling_weeks_entry.insert(0, "6")
-        self.doubling_weeks_entry.grid(row=0, column=8, padx=5, pady=5)
+        self.doubling_weeks_entry.grid(row=0, column=8, padx=(5,0), pady=5)
 
         style = ttk.Style()
         style.configure('Blue.TLabel', foreground='blue')
