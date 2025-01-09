@@ -313,6 +313,7 @@ class CryptoTrader:
         style = ttk.Style()
         style.configure('Red.TButton', foreground='red', font=('TkDefaultFont', 14, 'bold'))
         style.configure('Black.TButton', foreground='black', font=('TkDefaultFont', 14, 'normal'))
+        style.configure('Red.TEntry', foreground='red')
  
         # 金额设置框架
         amount_settings_frame = ttk.LabelFrame(scrollable_frame, text="金额设置", padding=(5, 5))
@@ -342,15 +343,15 @@ class CryptoTrader:
 
         # 利润率设置
         ttk.Label(settings_container, text="利润率(%):").grid(row=0, column=6, padx=5, pady=5)
-        self.profit_rate_entry = ttk.Entry(settings_container, width=5)
+        self.profit_rate_entry = ttk.Entry(settings_container, width=5, style='Red.TEntry')
         self.profit_rate_entry.insert(0, "11")
         self.profit_rate_entry.grid(row=0, column=7, padx=5, pady=5)
 
         # 翻倍周数
-        ttk.Label(settings_container, text="翻倍周数:").grid(row=0, column=8, padx=5, pady=5)
-        self.doubling_weeks_entry = ttk.Entry(settings_container, width=5)
+        ttk.Label(settings_container, text="周翻倍").grid(row=0, column=9, padx=5, pady=5)
+        self.doubling_weeks_entry = ttk.Entry(settings_container, width=5, style='Red.TEntry')
         self.doubling_weeks_entry.insert(0, "6")
-        self.doubling_weeks_entry.grid(row=0, column=9, padx=5, pady=5)
+        self.doubling_weeks_entry.grid(row=0, column=8, padx=5, pady=5)
 
         style = ttk.Style()
         style.configure('Blue.TLabel', foreground='blue')
