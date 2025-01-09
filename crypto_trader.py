@@ -453,7 +453,7 @@ class CryptoTrader:
         self.update_amount_button['state'] = 'disabled'  # 初始禁用
 
         # 添加价格按钮
-        prices = ['0.51', '0.52', '0.53-10次', '0.54']
+        prices = ['0.52', '0.53', '0.54']
         for price in prices:
             btn = ttk.Button(
                 button_frame, 
