@@ -325,19 +325,19 @@ class CryptoTrader:
         # 初始金额设置
         ttk.Label(settings_container, text="初始金额(%):").grid(row=0, column=0, padx=5, pady=5)
         self.initial_amount_entry = ttk.Entry(settings_container, width=5)
-        self.initial_amount_entry.insert(0, "9")
+        self.initial_amount_entry.insert(0, "11")
         self.initial_amount_entry.grid(row=0, column=1, padx=5, pady=5)
         
         # 反水一次设置
         ttk.Label(settings_container, text="反水一次(%):").grid(row=0, column=2, padx=5, pady=5)
         self.first_rebound_entry = ttk.Entry(settings_container, width=5)
-        self.first_rebound_entry.insert(0, "150")
+        self.first_rebound_entry.insert(0, "130")
         self.first_rebound_entry.grid(row=0, column=3, padx=5, pady=5)
         
         # 反水N次设置
         ttk.Label(settings_container, text="反水N次(%):").grid(row=0, column=4, padx=5, pady=5)
         self.n_rebound_entry = ttk.Entry(settings_container, width=5)
-        self.n_rebound_entry.insert(0, "113")
+        self.n_rebound_entry.insert(0, "112")
         self.n_rebound_entry.grid(row=0, column=5, padx=5, pady=5)
 
         # 利润率设置
@@ -6445,12 +6445,12 @@ class CryptoTrader:
             )
             
             settings = {
-                "10": {"initial": "10", "first_rebound": "135", "n_rebound": "119", "profit_rate": "17"},
-                "12": {"initial": "8", "first_rebound": "150", "n_rebound": "117", "profit_rate": "13"},
-                "16": {"initial": "8", "first_rebound": "140", "n_rebound": "112", "profit_rate": "9"},
-                "18": {"initial": "5.5", "first_rebound": "145", "n_rebound": "113", "profit_rate": "7"},
-                "20": {"initial": "4.3", "first_rebound": "160", "n_rebound": "112", "profit_rate": "5"},
-                "22": {"initial": "3.3", "first_rebound": "145", "n_rebound": "113", "profit_rate": "4"}
+                "10": {"initial": "19", "first_rebound": "130", "n_rebound": "112", "profit_rate": "20"},
+                "12": {"initial": "14", "first_rebound": "130", "n_rebound": "112", "profit_rate": "14"},
+                "16": {"initial": "8.8", "first_rebound": "130", "n_rebound": "112", "profit_rate": "9"},
+                "18": {"initial": "6.8", "first_rebound": "145", "n_rebound": "112", "profit_rate": "7"},
+                "20": {"initial": "5.3", "first_rebound": "160", "n_rebound": "112", "profit_rate": "5.5"},
+                "22": {"initial": "4.2", "first_rebound": "145", "n_rebound": "112", "profit_rate": "4"}
             }
             
             if button_value in settings:
