@@ -408,7 +408,7 @@ class CryptoTrader:
         for i in range(8):
             settings_container.grid_columnconfigure(i, weight=1)
         # 设置窗口大小和位置
-        window_width = 880
+        window_width = 870
         window_height = 900
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
