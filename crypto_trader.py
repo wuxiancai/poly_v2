@@ -309,12 +309,15 @@ class CryptoTrader:
         main_canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        # 创建红色粗体样式
+        """创建按钮和输入框样式"""
         style = ttk.Style()
         style.configure('Red.TButton', foreground='red', font=('TkDefaultFont', 14, 'bold'))
         style.configure('Black.TButton', foreground='black', font=('TkDefaultFont', 14, 'normal'))
-        style.configure('Red.TEntry', foreground='red')
- 
+        style.configure('Red.TEntry', foreground='red', font=('TkDefaultFont', 14, 'normal'))
+        style.configure('Blue.TButton', foreground='blue', font=('TkDefaultFont', 14, 'bold'))
+        style.configure('Blue.TLabel', foreground='blue', font=('TkDefaultFont', 14, 'normal'))
+        style.configure('Red.TLabel', foreground='red', font=('TkDefaultFont', 14, 'normal'))
+
         # 金额设置框架
         amount_settings_frame = ttk.LabelFrame(scrollable_frame, text="金额设置", padding=(5, 5))
         amount_settings_frame.pack(fill="x", padx=5, pady=5)
@@ -324,41 +327,37 @@ class CryptoTrader:
         settings_container.pack(expand=True)
         
         # 初始金额设置
-        ttk.Label(settings_container, text="初始金额(%):").grid(row=0, column=0, padx=5, pady=5)
-        self.initial_amount_entry = ttk.Entry(settings_container, width=5)
+        ttk.Label(settings_container, text="初始金额(%):").grid(row=0, column=0, padx=(5,0), pady=5)
+        self.initial_amount_entry = ttk.Entry(settings_container, width=3)
         self.initial_amount_entry.insert(0, "11")
-        self.initial_amount_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.initial_amount_entry.grid(row=0, column=1, padx=(0,5), pady=5)
         
         # 反水一次设置
-        ttk.Label(settings_container, text="反水一次(%):").grid(row=0, column=2, padx=5, pady=5)
-        self.first_rebound_entry = ttk.Entry(settings_container, width=5)
+        ttk.Label(settings_container, text="反水一次(%):").grid(row=0, column=2, padx=(5,0), pady=5)
+        self.first_rebound_entry = ttk.Entry(settings_container, width=3)
         self.first_rebound_entry.insert(0, "130")
-        self.first_rebound_entry.grid(row=0, column=3, padx=5, pady=5)
+        self.first_rebound_entry.grid(row=0, column=3, padx=(0,5), pady=5)
         
         # 反水N次设置
-        ttk.Label(settings_container, text="反水N次(%):").grid(row=0, column=4, padx=5, pady=5)
-        self.n_rebound_entry = ttk.Entry(settings_container, width=5)
+        ttk.Label(settings_container, text="反水N次(%):").grid(row=0, column=4, padx=(5,0), pady=5)
+        self.n_rebound_entry = ttk.Entry(settings_container, width=3)
         self.n_rebound_entry.insert(0, "112")
-        self.n_rebound_entry.grid(row=0, column=5, padx=5, pady=5)
+        self.n_rebound_entry.grid(row=0, column=5, padx=(0,5), pady=5)
 
         # 利润率设置
-        ttk.Label(settings_container, text="利润率(%):").grid(row=0, column=6, padx=5, pady=5)
-        self.profit_rate_entry = ttk.Entry(settings_container, width=5, style='Red.TEntry')
+        ttk.Label(settings_container, text="利润率(%):").grid(row=0, column=6, padx=(5,0), pady=5)
+        self.profit_rate_entry = ttk.Entry(settings_container, width=3)
         self.profit_rate_entry.insert(0, "11")
-        self.profit_rate_entry.grid(row=0, column=7, padx=5, pady=5)
+        self.profit_rate_entry.grid(row=0, column=7, padx=(0,5), pady=5)
 
         # 翻倍周数
-        ttk.Label(settings_container, text="周翻倍").grid(row=0, column=9, padx=(0,5), pady=5)
-        self.doubling_weeks_entry = ttk.Entry(settings_container, width=5, style='Red.TEntry')
+        ttk.Label(settings_container, text="周翻倍", style='Red.TLabel').grid(row=0, column=9, padx=(0,5), pady=5)
+        self.doubling_weeks_entry = ttk.Entry(settings_container, width=2, style='Red.TEntry')
         self.doubling_weeks_entry.insert(0, "6")
         self.doubling_weeks_entry.grid(row=0, column=8, padx=(5,0), pady=5)
-
-        style = ttk.Style()
-        style.configure('Blue.TLabel', foreground='blue')
         
         # 交易次数
         ttk.Label(settings_container, text="交易次数:", style='Blue.TLabel').grid(row=1, column=0, padx=5, pady=5)
-        ttk.Label(settings_container, text="默认14次", style='Blue.TLabel').grid(row=1, column=7, padx=5, pady=5)
         
         # 次数按钮
         self.trade_buttons = {}  # 保存按钮引用
@@ -375,29 +374,35 @@ class CryptoTrader:
                                             style='Black.TButton')
         self.trade_buttons["12"].grid(row=1, column=2, padx=3, pady=3)
         
+        # 14按钮
+        self.trade_buttons["14"] = ttk.Button(settings_container, text="14", width=5, 
+                                            command=lambda: self.set_amount_values("14"),
+                                            style='Blue.TButton')
+        self.trade_buttons["14"].grid(row=1, column=3, padx=3, pady=3)
+
         # 16按钮
         self.trade_buttons["16"] = ttk.Button(settings_container, text="16", width=5, 
                                             command=lambda: self.set_amount_values("16"),
                                             style='Black.TButton')
-        self.trade_buttons["16"].grid(row=1, column=3, padx=3, pady=3)
+        self.trade_buttons["16"].grid(row=1, column=4, padx=3, pady=3)
         
         # 18按钮
         self.trade_buttons["18"] = ttk.Button(settings_container, text="18", width=5, 
                                             command=lambda: self.set_amount_values("18"),
                                             style='Black.TButton')
-        self.trade_buttons["18"].grid(row=1, column=4, padx=3, pady=3)
+        self.trade_buttons["18"].grid(row=1, column=5, padx=3, pady=3)
         
         # 20按钮
         self.trade_buttons["20"] = ttk.Button(settings_container, text="20", width=5, 
                                             command=lambda: self.set_amount_values("20"),
                                             style='Black.TButton')
-        self.trade_buttons["20"].grid(row=1, column=5, padx=3, pady=3)
+        self.trade_buttons["20"].grid(row=1, column=6, padx=3, pady=3)
         
         # 22按钮
         self.trade_buttons["22"] = ttk.Button(settings_container, text="22", width=5, 
                                             command=lambda: self.set_amount_values("22"),
                                             style='Black.TButton')
-        self.trade_buttons["22"].grid(row=1, column=6, padx=3, pady=3)
+        self.trade_buttons["22"].grid(row=1, column=7, padx=3, pady=3)
 
         # 配置列权重使输入框均匀分布
         for i in range(8):
@@ -429,11 +434,6 @@ class CryptoTrader:
         current_url = self.config.get('website', {}).get('url', '')
         if current_url:
             self.url_entry.set(current_url)
-        
-        # 在创建按钮之前，添加自定义样式
-        style = ttk.Style()
-        style.configure('Black.TButton', foreground='blue')  # 默认蓝色文字
-        style.configure('Red.TButton', foreground='red')  # 保留红色样式用于状态变化
         
         # 控制按钮区域
         button_frame = ttk.Frame(scrollable_frame)
@@ -467,7 +467,7 @@ class CryptoTrader:
                 text=price,
                 width=4,
                 command=lambda p=price: self.set_default_price(p),
-                style='Black.TButton'
+                style='Blue.TButton' if price == '0.52' else 'Black.TButton'
             )
             btn.pack(side=tk.LEFT, padx=2)
         
@@ -6452,12 +6452,13 @@ class CryptoTrader:
             )
             
             settings = {
-                "10": {"initial": "10", "first_rebound": "135", "n_rebound": "119", "profit_rate": "17", "doubling_weeks": "4"},
-                "12": {"initial": "8", "first_rebound": "150", "n_rebound": "117", "profit_rate": "13", "doubling_weeks": "5"},
-                "16": {"initial": "7", "first_rebound": "160", "n_rebound": "112", "profit_rate": "9", "doubling_weeks": "8"},
-                "18": {"initial": "5.5", "first_rebound": "160", "n_rebound": "112", "profit_rate": "7", "doubling_weeks": "10"},
-                "20": {"initial": "4.3", "first_rebound": "160", "n_rebound": "112", "profit_rate": "5", "doubling_weeks": "12"},
-                "22": {"initial": "3.4", "first_rebound": "160", "n_rebound": "112", "profit_rate": "4", "doubling_weeks": "16"}
+                "10": {"initial": "19", "first_rebound": "130", "n_rebound": "112", "profit_rate": "20", "doubling_weeks": "4"},
+                "12": {"initial": "14", "first_rebound": "130", "n_rebound": "112", "profit_rate": "14", "doubling_weeks": "5"},
+                "14": {"initial": "11", "first_rebound": "130", "n_rebound": "112", "profit_rate": "11", "doubling_weeks": "6"},
+                "16": {"initial": "8.7", "first_rebound": "130", "n_rebound": "112", "profit_rate": "9", "doubling_weeks": "8"},
+                "18": {"initial": "6.8", "first_rebound": "130", "n_rebound": "112", "profit_rate": "7", "doubling_weeks": "10"},
+                "20": {"initial": "5.3", "first_rebound": "130", "n_rebound": "112", "profit_rate": "5", "doubling_weeks": "12"},
+                "22": {"initial": "4.2", "first_rebound": "130", "n_rebound": "112", "profit_rate": "4", "doubling_weeks": "16"}
             }
             
             if button_value in settings:
