@@ -346,6 +346,12 @@ class CryptoTrader:
         self.profit_rate_entry.insert(0, "11")
         self.profit_rate_entry.grid(row=0, column=7, padx=5, pady=5)
 
+        # 翻倍周数
+        ttk.Label(settings_container, text="翻倍周数:").grid(row=0, column=8, padx=5, pady=5)
+        self.doubling_weeks_entry = ttk.Entry(settings_container, width=5)
+        self.doubling_weeks_entry.insert(0, "6")
+        self.doubling_weeks_entry.grid(row=0, column=9, padx=5, pady=5)
+
         style = ttk.Style()
         style.configure('Blue.TLabel', foreground='blue')
         
@@ -396,7 +402,7 @@ class CryptoTrader:
         for i in range(8):
             settings_container.grid_columnconfigure(i, weight=1)
         # 设置窗口大小和位置
-        window_width = 800
+        window_width = 880
         window_height = 900
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
@@ -6445,12 +6451,12 @@ class CryptoTrader:
             )
             
             settings = {
-                "10": {"initial": "19", "first_rebound": "130", "n_rebound": "112", "profit_rate": "20"},
-                "12": {"initial": "14", "first_rebound": "130", "n_rebound": "112", "profit_rate": "14"},
-                "16": {"initial": "8.7", "first_rebound": "130", "n_rebound": "112", "profit_rate": "9"},
-                "18": {"initial": "6.8", "first_rebound": "130", "n_rebound": "112", "profit_rate": "7"},
-                "20": {"initial": "5.3", "first_rebound": "130", "n_rebound": "112", "profit_rate": "5"},
-                "22": {"initial": "4.2", "first_rebound": "130", "n_rebound": "112", "profit_rate": "4"}
+                "10": {"initial": "10", "first_rebound": "135", "n_rebound": "119", "profit_rate": "17", "doubling_weeks": "4"},
+                "12": {"initial": "8", "first_rebound": "150", "n_rebound": "117", "profit_rate": "13", "doubling_weeks": "5"},
+                "16": {"initial": "7", "first_rebound": "160", "n_rebound": "112", "profit_rate": "9", "doubling_weeks": "8"},
+                "18": {"initial": "5.5", "first_rebound": "160", "n_rebound": "112", "profit_rate": "7", "doubling_weeks": "10"},
+                "20": {"initial": "4.3", "first_rebound": "160", "n_rebound": "112", "profit_rate": "5", "doubling_weeks": "12"},
+                "22": {"initial": "3.4", "first_rebound": "160", "n_rebound": "112", "profit_rate": "4", "doubling_weeks": "16"}
             }
             
             if button_value in settings:
@@ -6461,7 +6467,8 @@ class CryptoTrader:
                     (self.initial_amount_entry, values["initial"]),
                     (self.first_rebound_entry, values["first_rebound"]),
                     (self.n_rebound_entry, values["n_rebound"]),
-                    (self.profit_rate_entry, values["profit_rate"])
+                    (self.profit_rate_entry, values["profit_rate"]),
+                    (self.doubling_weeks_entry, values["doubling_weeks"])
                 ]
                 
                 for entry, value in entries:
