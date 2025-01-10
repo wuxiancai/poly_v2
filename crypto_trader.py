@@ -6101,7 +6101,7 @@ class CryptoTrader:
                 self.logger.info("交易验证成功")
                 return True        
         except Exception as e:
-            self.logger.warning(f"交易验证失败: {str(e)}")
+            # self.logger.warning(f"交易验证失败: {str(e)}")
             return False
         
     def Verify_trade_no(self):
@@ -6122,7 +6122,7 @@ class CryptoTrader:
                 self.logger.info("交易验证成功")
                 return True        
         except Exception as e:
-            self.logger.warning(f"交易验证失败: {str(e)}")
+            # self.logger.warning(f"交易验证失败: {str(e)}")
             return False
     
     def only_sell_yes(self):
@@ -6310,7 +6310,7 @@ class CryptoTrader:
 
     def sleep_refresh(self, operation_name="未指定操作"):
         """
-        执行等待4秒并刷新页面的操作，重复4次
+        执行等待3秒并刷新页面的操作,重复7次
         
         Args:
             operation_name (str): 操作名称,用于日志记录
@@ -6318,8 +6318,8 @@ class CryptoTrader:
         time.sleep(3)
         self.driver.refresh()
         try:
-            for i in range(7):  # 重复次数，修改数字即可
-                self.logger.info(f"{operation_name} - 等待3秒后刷新页面 ({i+1}/4)")
+            for i in range(6):  # 重复次数，修改数字即可
+                self.logger.info(f"{operation_name} - 等待3秒后刷新页面 ({i+1}/6)")
                 time.sleep(3)  # 等待6秒
                 self.driver.refresh()  # 刷新页面       
         except Exception as e:
