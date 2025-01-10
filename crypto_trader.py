@@ -84,7 +84,7 @@ class CryptoTrader:
         self.trade_count = 0
         self.sell_count = 0  # 添加卖出计数器
         self.is_trading = False  # 添加交易状态标志
-        self.refresh_interval = 300000  # 5分钟 = 300000毫秒
+        self.refresh_interval = 600000  # 10分钟 = 600000毫秒
         self.refresh_timer = None  # 用于存储定时器ID
         self.default_target_price = 0.52
         try:
@@ -259,7 +259,7 @@ class CryptoTrader:
 
     def setup_gui(self):
         self.root = tk.Tk()
-        self.root.title("Polymarket 14 次自动交易，11%利润率！")
+        self.root.title("Polymarket 14 次自动交易11%利润率！")
         # 创建主滚动框架
         main_canvas = tk.Canvas(self.root)
         scrollbar = ttk.Scrollbar(self.root, orient="vertical", command=main_canvas.yview)
@@ -1318,7 +1318,7 @@ class CryptoTrader:
                     self.login_check_timer = self.root.after(20000, check_login_status)  # 每20秒检查一次
         
         # 开始第一次检查
-        self.login_check_timer = self.root.after(20000, check_login_status)
+        self.login_check_timer = self.root.after(40000, check_login_status)
 
     def _start_browser_monitoring(self, new_url):
         """在新线程中执行浏览器操作"""
@@ -2861,7 +2861,7 @@ class CryptoTrader:
                         self.send_trade_email(
                             trade_type="Buy No 4",
                             price=no_price,
-                            amount=float(no4_price_entry.get()),
+                            amount=0.0,
                             trade_count=self.trade_count
                         )
                     else:
@@ -5986,9 +5986,12 @@ class CryptoTrader:
                     
                     # 设置初始价格
                     self.yes_price_entry.delete(0, tk.END)
-                    self.yes_price_entry.insert(0, "0.53")
+                    self.yes_price_entry.insert(0, "0.52")
                     self.no_price_entry.delete(0, tk.END)
-                    self.no_price_entry.insert(0, "0.53")
+                    self.no_price_entry.insert(0, "0.52")
+
+                    # 更新金额
+                    self.update_amount_button.invoke()
 
                     """# 在所有操作完成后,优雅退出并重启
                     self.logger.info("准备重启程序...")
@@ -6067,6 +6070,9 @@ class CryptoTrader:
                     self.yes_price_entry.insert(0, "0.52")
                     self.no_price_entry.delete(0, tk.END)
                     self.no_price_entry.insert(0, "0.52")
+
+                    # 更新金额
+                    self.update_amount_button.invoke()
                     
                     """# 在所有操作完成后,优雅退出并重启
                     self.logger.info("准备重启程序...")
@@ -6118,60 +6124,16 @@ class CryptoTrader:
         except Exception as e:
             self.logger.warning(f"交易验证失败: {str(e)}")
             return False
-
-    def Verify_only_sell_yes(self):
-        """
-        验证交易是否成功完成
-        Returns:
-        bool: 交易是否成功
-        """
-        time.sleep(2)
-        self.driver.refresh()
-        try:
-            # 等待并检查是否存在 Yes 标签
-            yes_element = WebDriverWait(self.driver, 5).until(
-                EC.presence_of_element_located((By.XPATH, 
-                    '//div[@class="c-dhzjXW c-chKWaB c-chKWaB-eVTycx-color-green c-dhzjXW-ibxvuTL-css" and text()="Yes"]'))
-            )
-            if yes_element.text == "Yes":
-                self.logger.info("Yes 仓位仍然存在，卖出失败")
-                return False   
-        except Exception as e:
-            self.logger.warning(f"卖出成功: {str(e)}")
-            return True
-        
-    def Verify_only_sell_no(self):
-        """
-        验证交易是否成功完成
-        Returns:
-        bool: 交易是否成功
-        """
-        time.sleep(2)
-        self.driver.refresh()
-        try:
-            # 等待并检查是否存在 No 标签
-            no_element = WebDriverWait(self.driver, 5).until(
-                EC.presence_of_element_located((By.XPATH, 
-                    '//div[@class="c-dhzjXW c-chKWaB c-chKWaB-kNNGp-color-red c-dhzjXW-ibxvuTL-css" and text()="No"]'))
-            )
-            if no_element.text == "No":
-                self.logger.info("No 仓位仍然存在，卖出失败")
-                return False        
-        except Exception as e:
-            self.logger.warning(f"卖出成功: {str(e)}")
-            return True   
     
     def only_sell_yes(self):
         """只卖出YES"""
         self.position_sell_yes_button.invoke()
         time.sleep(0.5)
         self.sell_profit_button.invoke()
-        time.sleep(2)
-        # 执行等待和刷新
-        self.driver.refresh()
+        
         self.sleep_refresh("only_sell_yes")
 
-        if not self.Verify_only_sell_yes():
+        if self.Verify_trade_yes():
             self.logger.warning("卖出验证失败，重试")
             return self.only_sell_yes()
                 
@@ -6191,12 +6153,11 @@ class CryptoTrader:
         self.position_sell_no_button.invoke()
         time.sleep(0.5)
         self.sell_profit_button.invoke()
-        time.sleep(2)
-        self.driver.refresh()
+        
         # 执行等待和刷新
         self.sleep_refresh("only_sell_no")
         
-        if not self.Verify_only_sell_no():
+        if self.Verify_trade_no():
             self.logger.warning("卖出验证失败，重试")
             return self.only_sell_no()
             
