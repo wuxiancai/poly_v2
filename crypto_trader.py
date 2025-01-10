@@ -4354,11 +4354,11 @@ class CryptoTrader:
                         no16_price_entry.delete(0, tk.END)
                         no16_price_entry.insert(0, "0.00")
                         
-                        # 设置No17价格
-                        no17_price_entry = self.no_frame.grid_slaves(row=34, column=1)[0]
-                        no17_price_entry.delete(0, tk.END)
-                        no17_price_entry.insert(0, str(self.default_target_price))
-                        no17_price_entry.configure(fg='red')  # 添加红色设置
+                        # 设置Yes17价格
+                        yes17_price_entry = self.yes_frame.grid_slaves(row=34, column=1)[0]
+                        yes17_price_entry.delete(0, tk.END)
+                        yes17_price_entry.insert(0, str(self.default_target_price))
+                        yes17_price_entry.configure(fg='red')  # 添加红色设置
                         
                         self.trade_count += 1
                         self.send_trade_email(
