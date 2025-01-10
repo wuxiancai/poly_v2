@@ -1741,14 +1741,12 @@ class CryptoTrader:
             
             # 根据按钮类型查找并点击对应的网站按钮
             if button_type == "Buy":
-                xpath = "//button[contains(@class, 'Buy') or .//span[contains(text(), 'Buy')]]"
+                xpath = "//*[@id='column-wrapper']/div/div/div/div[1]/div/div[1]/div/div/div[1]"
             elif button_type == "Sell":
-                xpath = "//button[contains(@class, 'Sell') or .//span[contains(text(), 'Sell')]]"
-            elif button_type == "Max":
-                xpath = "//button[contains(text(), 'Max') or .//span[contains(text(), 'Max')]]"
+                xpath = "//*[@id='column-wrapper']/div/div/div/div[1]/div/div[1]/div/div/div[2]"
             elif button_type == "Buy-Confirm":
                 # 使用固定的XPath路径
-                xpath = '//div[@class="c-dhzjXW c-dhzjXW-ihxUIch-css"]//button'
+                xpath = '//div[@class="c-dhzjXW c-dhzjXW-ihxUIch-css"]//button' #good
             elif button_type == "SetExpBuy":
                 # 先点击 Set Expiration
                 exp_button = WebDriverWait(self.driver, 10).until(
@@ -1935,7 +1933,7 @@ class CryptoTrader:
                 self.update_status("请先连接浏览器")
                 return
             button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, '//*[@id="event-layout-with-side-nav"]/div[2]/div/div[1]/div/div[1]/div/div/div[1]'))
+                EC.element_to_be_clickable((By.XPATH, '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[1]/div/div/div[1]'))
             )
             self.driver.execute_script("arguments[0].click();", button)
             self.update_status("已点击 Buy 按钮")
@@ -1950,7 +1948,7 @@ class CryptoTrader:
                 self.update_status("请先连接浏览器")
                 return
             button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, '//*[@id="event-layout-with-side-nav"]/div[2]/div/div[1]/div/div[1]/div/div/div[2]'))
+                EC.element_to_be_clickable((By.XPATH, '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[1]/div/div/div[2]'))
             )
             self.driver.execute_script("arguments[0].click();", button)
             self.update_status("已点击 Sell 按钮")
@@ -1966,7 +1964,8 @@ class CryptoTrader:
                 return
             
             button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, '//*[@id="event-layout-with-side-nav"]/div[2]/div/div[1]/div/div[2]/div[1]/div[2]/div/div[1]/div'))
+                EC.element_to_be_clickable((By.XPATH,
+                                            '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div/div[1]/div'))
             )
             self.driver.execute_script("arguments[0].click();", button)
             self.update_status("已点击 Buy-Yes 按钮")
@@ -1981,8 +1980,8 @@ class CryptoTrader:
                 self.update_status("请先连接浏览器")
                 return
             button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, 
-                    '//*[@id="event-layout-with-side-nav"]/div[2]/div/div[1]/div/div[2]/div[1]/div[2]/div/div[2]/div'))
+                EC.element_to_be_clickable((By.XPATH,
+                                            '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div/div[2]/div'))
             )# //div[@class="c-dhzjXW c-dhzjXW-ibzvESn-css"]
             self.driver.execute_script("arguments[0].click();", button)
             self.update_status("已点击 Buy-No 按钮")
@@ -1999,7 +1998,7 @@ class CryptoTrader:
             
             button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, 
-                    '//*[@id="event-layout-with-side-nav"]/div[2]/div/div[1]/div/div[2]/div[1]/div[2]/div[1]/div[1]/div'))
+                    '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div/div[1]/div'))
             )# //div[@class="c-dhzjXW c-dhzjXW-iiUtrmZ-css"]
             self.driver.execute_script("arguments[0].click();", button)
             self.update_status("已点击 Sell-Yes 按钮")
@@ -2015,7 +2014,7 @@ class CryptoTrader:
                 return
             button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, 
-                    '//*[@id="event-layout-with-side-nav"]/div[2]/div/div[1]/div/div[2]/div[1]/div[2]/div[1]/div[2]/div'))
+                    '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div/div[2]/div'))
             )# //div[@class="c-dhzjXW c-dhzjXW-ibzvESn-css"]
             self.driver.execute_script("arguments[0].click();", button)
             self.update_status("已点击 Sell-No 按钮")
@@ -2034,7 +2033,8 @@ class CryptoTrader:
             button_text = button.cget("text")
             # 找到输入框
             amount_input = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, '//*[@id="event-layout-with-side-nav"]/div[2]/div/div[1]/div/div[2]/div[2]/div[2]/input'))
+                EC.presence_of_element_located((By.XPATH,
+                                                '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[2]/div[2]/input'))
             )# //input[@class="c-ecshmo c-ecshmo-ielLCmU-css"]
             # 清空输入框
             amount_input.clear()
@@ -6095,7 +6095,7 @@ class CryptoTrader:
             # 等待并检查是否存在 Yes 标签
             yes_element = WebDriverWait(self.driver, 5).until(
                 EC.presence_of_element_located((By.XPATH, 
-                    '//div[@class="c-dhzjXW c-chKWaB c-chKWaB-eVTycx-color-green c-dhzjXW-ibxvuTL-css" and text()="Yes"]'))
+                    '//*[@id="event-detail-container"]/div/div[2]/div/div[2]/div/div[2]/table/tbody/tr/td[1]/div')) #不用改
             )
             if yes_element.text == "Yes":
                 self.logger.info("交易验证成功")
@@ -6116,7 +6116,7 @@ class CryptoTrader:
             # 等待并检查是否存在 No 标签
             no_element = WebDriverWait(self.driver, 5).until(
                 EC.presence_of_element_located((By.XPATH, 
-                    '//div[@class="c-dhzjXW c-chKWaB c-chKWaB-kNNGp-color-red c-dhzjXW-ibxvuTL-css" and text()="No"]'))
+                    '//*[@id="event-detail-container"]/div/div[2]/div/div[2]/div/div[2]/table/tbody/tr/td[2]/div')) #不用改
             )
             if no_element.text == "No":
                 self.logger.info("交易验证成功")
