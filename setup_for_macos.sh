@@ -77,10 +77,37 @@ if ! grep -q "# Python 配置" ~/.zshrc; then
     echo 'export TK_SILENCE_DEPRECATION=1' >> ~/.zshrc
 fi
 
-# 自动安装 Chrome 和 ChromeDriver (无提示模式)
-echo "安装 Chrome 和 ChromeDriver..."
-brew install --cask google-chrome --force
-brew install chromedriver --force
+# 检查并安装 Chrome 和 ChromeDriver
+echo "检查 Chrome 和 ChromeDriver..."
+
+# 检查 Chrome 是否已安装
+if [ -d "/Applications/Google Chrome.app" ]; then
+    echo "${GREEN}Chrome 已安装${NC}"
+    CHROME_INSTALLED=true
+else
+    echo "Chrome 未安装"
+    CHROME_INSTALLED=false
+fi
+
+# 检查 ChromeDriver 是否已安装
+if command -v chromedriver &> /dev/null; then
+    echo "${GREEN}ChromeDriver 已安装${NC}"
+    CHROMEDRIVER_INSTALLED=true
+else
+    echo "ChromeDriver 未安装"
+    CHROMEDRIVER_INSTALLED=false
+fi
+
+# 根据检查结果进行安装
+if [ "$CHROME_INSTALLED" = false ]; then
+    echo "安装 Chrome..."
+    brew install --cask google-chrome --force
+fi
+
+if [ "$CHROMEDRIVER_INSTALLED" = false ]; then
+    echo "安装 ChromeDriver..."
+    brew install chromedriver --force
+fi
 
 chmod +x start_chrome.sh
 # 创建自动启动脚本
