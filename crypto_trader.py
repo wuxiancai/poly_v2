@@ -26,6 +26,7 @@ from email.header import Header
 import socket
 import sys
 import subprocess
+from xpath_config import XPathConfig
 
 
 class Logger:
@@ -317,11 +318,20 @@ class CryptoTrader:
         style.configure('Blue.TButton', foreground='blue', font=('TkDefaultFont', 14, 'bold'))
         style.configure('Blue.TLabel', foreground='blue', font=('TkDefaultFont', 14, 'normal'))
         style.configure('Red.TLabel', foreground='red', font=('TkDefaultFont', 14, 'normal'))
+        style.configure('Red.TLabelframe.Label', foreground='red')  # 设置标签文本颜色为红色
 
         # 金额设置框架
         amount_settings_frame = ttk.LabelFrame(scrollable_frame, text="金额设置", padding=(5, 5))
         amount_settings_frame.pack(fill="x", padx=5, pady=5)
-        
+        # 创建一个Frame来水平排列标题和警告
+        title_frame = ttk.Frame(amount_settings_frame)
+        title_frame.pack(fill="x", padx=5, pady=0)
+        # 添加标题和红色警告文本在同一行
+        ttk.Label(title_frame, 
+                text="重要:周单开始前先检查 XPATH 是否正确！！！在xpath_config.py 文件中修改！！！",
+                foreground='red',
+                font=('TkDefaultFont', 12, 'bold')).pack(side=tk.RIGHT, expand=True)
+
         # 创建金额设置容器的内部框架
         settings_container = ttk.Frame(amount_settings_frame)
         settings_container.pack(expand=True)
@@ -1298,8 +1308,7 @@ class CryptoTrader:
                 try:
                     # 检查登录按钮
                     try:
-                        login_button = self.driver.find_element(By.XPATH, 
-                            '//*[@id="__pm_viewport"]/nav[1]/div[1]/div[3]/div/nav/div/ul/div[1]/div/button')
+                        login_button = self.driver.find_element(By.XPATH, XPathConfig.LOGIN_BUTTON)
                         
                         if login_button.text == "Log In":
                             self.logger.warning("检测到未登录状态，正在执行登录...")
@@ -1687,7 +1696,7 @@ class CryptoTrader:
             time_elapsed = current_time - buy_time
             try:
                 # 获当价格
-                price_element = self.driver.find_element(By.XPATH, f"//button[contains(@class, '{position.lower()}')]")
+                price_element = self.driver.find_element(By.XPATH, XPathConfig.PRICE_BUTTON.format(position.lower()))
                 price_text = price_element.text
                 current_price = float(price_text.split()[1].replace('¢', '')) / 100
                 
@@ -1708,14 +1717,14 @@ class CryptoTrader:
     def execute_sell(self, position):
         """执行卖出操作"""
         try:
-            # 点击卖出按钮
-            sell_button = self.driver.find_element(By.XPATH, f"//div[contains(text(), '{position}')]/..//button[contains(text(), '卖出')]")
+            # 点击卖出按钮，(使用format填充position参数)
+            sell_button = self.driver.find_element(By.XPATH, XPathConfig.SELL_POSITION_BUTTON.format(position))
             sell_button.click()
             
             # 确认卖出
             confirm_button = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//button[contains(text(), '确认卖出')]"))  # 添加缺失的右括号
-            )  # 添加缺失的右括号
+                EC.presence_of_element_located((By.XPATH, XPathConfig.CONFIRM_SELL_BUTTON))
+            )
             confirm_button.click()    
         except Exception as e:  # 添加异常处理
             self.logger.error(f"执行卖出操作出错: {str(e)}")
@@ -1741,21 +1750,20 @@ class CryptoTrader:
             
             # 根据按钮类型查找并点击对应的网站按钮
             if button_type == "Buy":
-                xpath = "//*[@id='column-wrapper']/div/div/div/div[1]/div/div[1]/div/div/div[1]"
+                xpath = XPathConfig.WEBSITE_BUY
             elif button_type == "Sell":
-                xpath = "//*[@id='column-wrapper']/div/div/div/div[1]/div/div[1]/div/div/div[2]"
+                xpath = XPathConfig.WEBSITE_SELL
             elif button_type == "Buy-Confirm":
-                # 使用固定的XPath路径
-                xpath = '//div[@class="c-dhzjXW c-dhzjXW-ihxUIch-css"]//button' #good
+                xpath = XPathConfig.WEBSITE_BUY_CONFIRM
             elif button_type == "SetExpBuy":
                 # 先点击 Set Expiration
                 exp_button = WebDriverWait(self.driver, 10).until(
-                    EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Set Expiration')]"))
+                    EC.element_to_be_clickable((By.XPATH, XPathConfig.WEBSITE_SET_EXPIRATION))
                 )
                 exp_button.click()
                 time.sleep(1)  # 等待弹窗出现
                 
-                xpath = "//div[contains(@class, 'modal')]//button[contains(text(), 'Buy')]"
+                xpath = XPathConfig.WEBSITE_MODAL_BUY
             else:
                 self.update_status(f"未知的按钮类型: {button_type}")
                 return
@@ -1788,9 +1796,8 @@ class CryptoTrader:
             try:
                 # 尝试获取第一行YES的标签值，如果不存在会直接进入except块
                 first_position = WebDriverWait(self.driver, 1).until(  # 缩短等待时间到1秒
-                    EC.presence_of_element_located((By.XPATH, 
-                        '//div[@class="c-dhzjXW c-chKWaB c-chKWaB-eVTycx-color-green c-dhzjXW-ibxvuTL-css" and text()="Yes"]'))
-                )# //div[@class="c-dhzjXW c-chKWaB c-chKWaB-eVTycx-color-green c-dhzjXW-ibxvuTL-css" and text()="Yes"]
+                    EC.presence_of_element_located((By.XPATH, XPathConfig.POSITION_YES_LABEL))
+                )
                 position_value = first_position.text
             except:
                 # 如果获取第一行失败，不报错，继续执行
@@ -1799,14 +1806,12 @@ class CryptoTrader:
             if position_value == "Yes":
                 # 如果第一行是Yes，点击第二的按钮
                 button = WebDriverWait(self.driver, 5).until(
-                    EC.element_to_be_clickable((By.XPATH, 
-                        '(//button[@class="c-gBrBnR c-gBrBnR-iifsICY-css"])[2]'))
+                    EC.element_to_be_clickable((By.XPATH, XPathConfig.POSITION_SELL_NO_BUTTON))
                 )
             else:
                 # 如果第一行不存在或不是Yes，使用默认的第一行按钮
                 button = WebDriverWait(self.driver, 5).until(
-                    EC.element_to_be_clickable((By.XPATH, 
-                        '(//button[@class="c-gBrBnR c-gBrBnR-iifsICY-css"])'))
+                    EC.element_to_be_clickable((By.XPATH, XPathConfig.POSITION_SELL_BUTTON))
                 )
             # 执行点击
             self.driver.execute_script("arguments[0].click();", button)
@@ -1830,8 +1835,7 @@ class CryptoTrader:
             try:
                 # 尝试获取第二行NO的标签值，如果不存在会直接进入except块
                 second_position = WebDriverWait(self.driver, 2).until(  # 缩短等待时间到2秒
-                    EC.presence_of_element_located((By.XPATH, 
-                        '//div[@class="c-dhzjXW c-chKWaB c-chKWaB-eVTycx-color-green c-dhzjXW-ibxvuTL-css" and text()="No"]'))
+                    EC.presence_of_element_located((By.XPATH, XPathConfig.POSITION_NO_LABEL))
                 )
                 position_value = second_position.text
             except:
@@ -1842,14 +1846,12 @@ class CryptoTrader:
             if position_value == "No":
                 # 如果第二行是No，点击第一行YES 的 SELL的按钮
                 button = WebDriverWait(self.driver, 5).until(
-                    EC.element_to_be_clickable((By.XPATH, 
-                        '(//button[@class="c-gBrBnR c-gBrBnR-iifsICY-css"])[1]'))
+                    EC.element_to_be_clickable((By.XPATH, XPathConfig.POSITION_SELL_YES_BUTTON))
                 )
             else:
                 # 如果第二行不存在或不是No，使用默认的第一行按钮
                 button = WebDriverWait(self.driver, 5).until(
-                    EC.element_to_be_clickable((By.XPATH, 
-                        '(//button[@class="c-gBrBnR c-gBrBnR-iifsICY-css"])'))
+                    EC.element_to_be_clickable((By.XPATH, XPathConfig.POSITION_SELL_BUTTON))
                 )
             # 执行点击
             self.driver.execute_script("arguments[0].click();", button)
@@ -1867,8 +1869,7 @@ class CryptoTrader:
                 return
             # 点击Sell-卖出按钮
             button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, 
-                    '//div[@class="c-dhzjXW c-dhzjXW-ihxUIch-css"]//button'))
+                EC.element_to_be_clickable((By.XPATH, XPathConfig.SELL_PROFIT_BUTTON))
             )
             self.driver.execute_script("arguments[0].click();", button)
             self.update_status("已点击卖出盈利按钮")
@@ -1876,7 +1877,7 @@ class CryptoTrader:
             time.sleep(1)
             # 使用统一的MetaMask弹窗处理方法
             self._handle_metamask_popup()
-            """ 等待 5 秒，刷新 2 次，预防交易失败 """
+            """ 等待 4 秒，刷新 2 次，预防交易失败 """
             # 等待交易完成
             time.sleep(4)
             self.driver.refresh()
@@ -1899,15 +1900,13 @@ class CryptoTrader:
             try:
                 # 取Portfolio值
                 portfolio_element = WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located((By.XPATH, 
-                        '(//span[@class="c-PJLV c-jaFKlk c-PJLV-ibdakYG-css"])[1]'))
+                    EC.presence_of_element_located((By.XPATH, XPathConfig.PORTFOLIO_VALUE))
                 )
                 portfolio_value = portfolio_element.text
                 
                 # 获取Cash值
                 cash_element = WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located((By.XPATH, 
-                        '(//span[@class="c-PJLV c-jaFKlk c-PJLV-ibdakYG-css"])[2]'))
+                    EC.presence_of_element_located((By.XPATH, XPathConfig.CASH_VALUE))
                 )
                 cash_value = cash_element.text
                 
@@ -1933,7 +1932,7 @@ class CryptoTrader:
                 self.update_status("请先连接浏览器")
                 return
             button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[1]/div/div/div[1]'))
+                EC.element_to_be_clickable((By.XPATH, XPathConfig.BUY_BUTTON))
             )
             self.driver.execute_script("arguments[0].click();", button)
             self.update_status("已点击 Buy 按钮")
@@ -1948,7 +1947,7 @@ class CryptoTrader:
                 self.update_status("请先连接浏览器")
                 return
             button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[1]/div/div/div[2]'))
+                EC.element_to_be_clickable((By.XPATH, XPathConfig.SELL_BUTTON))
             )
             self.driver.execute_script("arguments[0].click();", button)
             self.update_status("已点击 Sell 按钮")
@@ -1964,8 +1963,7 @@ class CryptoTrader:
                 return
             
             button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH,
-                                            '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div/div[1]/div'))
+                EC.element_to_be_clickable((By.XPATH, XPathConfig.BUY_YES_BUTTON))
             )
             self.driver.execute_script("arguments[0].click();", button)
             self.update_status("已点击 Buy-Yes 按钮")
@@ -1980,9 +1978,8 @@ class CryptoTrader:
                 self.update_status("请先连接浏览器")
                 return
             button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH,
-                                            '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div/div[2]/div'))
-            )# //div[@class="c-dhzjXW c-dhzjXW-ibzvESn-css"]
+                EC.element_to_be_clickable((By.XPATH, XPathConfig.BUY_NO_BUTTON))
+            )
             self.driver.execute_script("arguments[0].click();", button)
             self.update_status("已点击 Buy-No 按钮")
         except Exception as e:
@@ -1997,9 +1994,8 @@ class CryptoTrader:
                 return
             
             button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, 
-                    '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div/div[1]/div'))
-            )# //div[@class="c-dhzjXW c-dhzjXW-iiUtrmZ-css"]
+                EC.element_to_be_clickable((By.XPATH, XPathConfig.SELL_YES_BUTTON))
+            )
             self.driver.execute_script("arguments[0].click();", button)
             self.update_status("已点击 Sell-Yes 按钮")
         except Exception as e:
@@ -2013,9 +2009,8 @@ class CryptoTrader:
                 self.update_status("请先连接浏览器")
                 return
             button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, 
-                    '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[1]/div[2]/div/div[2]/div'))
-            )# //div[@class="c-dhzjXW c-dhzjXW-ibzvESn-css"]
+                EC.element_to_be_clickable((By.XPATH, XPathConfig.SELL_NO_BUTTON))
+            )
             self.driver.execute_script("arguments[0].click();", button)
             self.update_status("已点击 Sell-No 按钮")
         except Exception as e:
@@ -2033,9 +2028,8 @@ class CryptoTrader:
             button_text = button.cget("text")
             # 找到输入框
             amount_input = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH,
-                                                '//*[@id="column-wrapper"]/div/div/div/div[1]/div/div[2]/div[2]/div[2]/input'))
-            )# //input[@class="c-ecshmo c-ecshmo-ielLCmU-css"]
+                EC.presence_of_element_located((By.XPATH, XPathConfig.AMOUNT_INPUT))
+            )
             # 清空输入框
             amount_input.clear()
             # 根据按钮文本获取对应的金额
@@ -6094,8 +6088,7 @@ class CryptoTrader:
         try:
             # 等待并检查是否存在 Yes 标签
             yes_element = WebDriverWait(self.driver, 5).until(
-                EC.presence_of_element_located((By.XPATH, 
-                    '//*[@id="event-detail-container"]/div/div[2]/div/div[2]/div/div[2]/table/tbody/tr/td[1]/div')) #不用改
+                EC.presence_of_element_located((By.XPATH, XPathConfig.POSITION_YES_LABEL))
             )
             if yes_element.text == "Yes":
                 self.logger.info("交易验证成功")
@@ -6115,8 +6108,7 @@ class CryptoTrader:
         try:
             # 等待并检查是否存在 No 标签
             no_element = WebDriverWait(self.driver, 5).until(
-                EC.presence_of_element_located((By.XPATH, 
-                    '//*[@id="event-detail-container"]/div/div[2]/div/div[2]/div/div[2]/table/tbody/tr/td[2]/div')) #不用改
+                EC.presence_of_element_located((By.XPATH, XPathConfig.POSITION_NO_LABEL))
             )
             if no_element.text == "No":
                 self.logger.info("交易验证成功")
@@ -6334,8 +6326,7 @@ class CryptoTrader:
             # 刷新页面
             self.driver.refresh()
             # 点击登录按钮
-            login_button = self.driver.find_element(By.XPATH, 
-                '//*[@id="__pm_viewport"]/nav[1]/div[1]/div[3]/div/nav/div/ul/div[1]/div/button')
+            login_button = self.driver.find_element(By.XPATH, XPathConfig.LOGIN_BUTTON)
             login_button.click()
             time.sleep(1)
             
