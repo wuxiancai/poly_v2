@@ -6320,7 +6320,7 @@ class CryptoTrader:
         try:
             for i in range(6):  # 重复次数，修改数字即可
                 self.logger.info(f"{operation_name} - 等待3秒后刷新页面 ({i+1}/6)")
-                time.sleep(3)  # 等待6秒
+                time.sleep(4)  # 等待4秒
                 self.driver.refresh()  # 刷新页面       
         except Exception as e:
             self.logger.error(f"{operation_name} - sleep_refresh操作失败: {str(e)}")
