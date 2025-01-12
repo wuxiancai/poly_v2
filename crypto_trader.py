@@ -107,9 +107,9 @@ class CryptoTrader:
         # 检查是否是重启
         self.is_restart = '--restart' in sys.argv
         
-        # 如果是重启,延迟2秒后自动点击开始监控
+        """# 如果是重启,延迟2秒后自动点击开始监控
         if self.is_restart:
-            self.root.after(2000, self.auto_start_monitor)
+            self.root.after(2000, self.auto_start_monitor)"""
         
         # 添加当前监控网址的属性
         self.current_url = ''
@@ -418,7 +418,7 @@ class CryptoTrader:
         for i in range(8):
             settings_container.grid_columnconfigure(i, weight=1)
         # 设置窗口大小和位置
-        window_width = 850
+        window_width = 750
         window_height = 900
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
@@ -448,6 +448,19 @@ class CryptoTrader:
         # 控制按钮区域
         button_frame = ttk.Frame(scrollable_frame)
         button_frame.pack(fill="x", padx=5, pady=5)
+
+        # 修改样式定义
+        style = ttk.Style()
+        # 确保使用默认主题
+        style.theme_use('default')
+        # 使用map来处理不同状态下的样式
+        style.map('Red.TButton',
+            foreground=[('disabled', 'red'), ('active', 'red'), ('!disabled', 'red')],
+            background=[('disabled', '!focus', 'SystemButtonFace')]
+        )
+        style.map('Black.TButton',
+            foreground=[('disabled', 'black'), ('active', 'black'), ('!disabled', 'black')]
+        )
         
         # 开始和停止按钮
         self.start_button = ttk.Button(button_frame, text="开始监控", 
@@ -468,6 +481,12 @@ class CryptoTrader:
                                              style='Black.TButton')  # 默认使用黑色文字
         self.update_amount_button.pack(side=tk.LEFT, padx=5)
         self.update_amount_button['state'] = 'disabled'  # 初始禁用
+
+        # 添加程序重启按钮
+        self.restart_button = ttk.Button(button_frame, text="重启程序", 
+                                         command=self.restart_program, width=10,
+                                         style='Black.TButton')  # 默认使用黑色文字
+        self.restart_button.pack(side=tk.LEFT, padx=5)
 
         # 添加价格按钮
         prices = ['0.52', '0.53', '0.54']
@@ -1333,23 +1352,22 @@ class CryptoTrader:
         """在新线程中执行浏览器操作"""
         try:
             self.update_status(f"正在尝试访问: {new_url}")
-            
             if not self.driver:
                 chrome_options = Options()
                 chrome_options.debugger_address = "127.0.0.1:9222"
-                chrome_options.add_argument('--no-sandbox')
-                chrome_options.add_argument('--disable-dev-shm-usage')
-                
-                # Linux特定的Chrome配置
-                if platform.system() == 'Linux':
-                    chrome_options.add_argument('--disable-gpu')
-                    chrome_options.add_argument('--disable-software-rasterizer')
                 try:
                     self.driver = webdriver.Chrome(options=chrome_options)
-                    self.update_status("连接到浏览器")
+                    self.update_status("成功连接到浏览器")
                 except Exception as e:
-                    self.logger.error(f"连接浏览器失败: {str(e)}")
+                    self.logger.error(f"连接浏览器详细错误: {str(e)}")
                     self._show_error_and_reset("无法连接Chrome浏览器，请确保已运行start_chrome.sh")
+                    return 
+                try:
+                    self.driver.get(new_url)
+                    self.update_status(f"成功访问: {new_url}")
+                except Exception as e:
+                    self.logger.error(f"访问URL失败: {str(e)}")
+                    self._show_error_and_reset(f"访问 {new_url} 失败")
                     return
             try:
                 # 在当前标签页打开URL
