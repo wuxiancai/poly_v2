@@ -113,10 +113,7 @@ class CryptoTrader:
         
         # 添加当前监控网址的属性
         self.current_url = ''
-        
-        # 添加URL监控定时器
-        self.url_check_timer = None
-        
+      
         # 添加登录状态监控定时器
         self.login_check_timer = None
 
@@ -332,7 +329,7 @@ class CryptoTrader:
         title_frame.pack(fill="x", padx=5, pady=5)
         # 添加标题和红色警告文本在同一行
         ttk.Label(title_frame, 
-                text="重要:周单开始前先检查 XPATH 是否正确！！！在xpath_config.py 文件中修改！！！",
+                text="重要:周单开始前先检查 XPATH 是否正确!!!在xpath_config.py 文件中修改!!!",
                 foreground='red',
                 font=('TkDefaultFont', 12, 'bold')).pack(side=tk.RIGHT, expand=True)
 
@@ -1280,8 +1277,6 @@ class CryptoTrader:
         # 自动点击更新金额按钮
         self.schedule_update_amount()
 
-        # 启动URL监控
-        self.start_url_monitoring()
         # 启动登录状态监控
         self.start_login_monitoring()
         # 启动页面刷新定时器
@@ -1292,8 +1287,8 @@ class CryptoTrader:
         try:
             if retry_count < 15:  # 最多重试15次
                 self.logger.info(f"安排更新金额操作 (尝试 {retry_count + 1}/15)")
-                # 5秒后执行
-                self.root.after(2000, lambda: self.try_update_amount(retry_count))
+                # 3秒后执行
+                self.root.after(3000, lambda: self.try_update_amount(retry_count))
             else:
                 self.logger.warning("更新金额操作达到最大重试次数")
         except Exception as e:
@@ -1303,31 +1298,10 @@ class CryptoTrader:
         """尝试更新金额"""
         try:
             self.update_amount_button.invoke()
-            self.logger.info("更新金额操作执行成功")
         except Exception as e:
             self.logger.error(f"更新金额操作失败 (尝试 {current_retry + 1}/15): {str(e)}")
             # 如果失败，安排下一次重试
             self.schedule_update_amount(current_retry + 1)
-
-    def start_url_monitoring(self):
-        """启动URL监控"""
-        def check_url():
-            if self.running and self.driver:
-                try:
-                    current_page_url = self.driver.current_url
-                    if current_page_url != self.current_url:
-                        self.logger.warning(f"检测到URL变化，正在恢复...")
-                        self.driver.get(self.current_url)
-                        self.logger.info("已恢复到正确的监控网址")
-                except Exception as e:
-                    self.logger.error(f"URL监控出错: {str(e)}")
-                
-                # 继续监控
-                if self.running:
-                    self.url_check_timer = self.root.after(1000, check_url)  # 每秒检查一次
-        
-        # 开始第一次检查
-        self.url_check_timer = self.root.after(1000, check_url)
 
     def start_login_monitoring(self):
         """启动登录状态监控"""
@@ -1377,7 +1351,7 @@ class CryptoTrader:
                     self.update_status("连接到浏览器")
                 except Exception as e:
                     self.logger.error(f"连接浏览器失败: {str(e)}")
-                    self._show_error_and_reset("无法连接Chrome浏览器，请确保已运行start_chrome.sh")
+                    self._show_error_and_reset("无法连接Chrome浏览器,请确保已运行start_chrome.sh")
                     return
             try:
                 # 在当前标签页打开URL
@@ -1436,12 +1410,6 @@ class CryptoTrader:
         """停止监控"""
         try:
             self.running = False
-            
-            # 停止URL监控
-            if self.url_check_timer:
-                self.root.after_cancel(self.url_check_timer)
-                self.url_check_timer = None
-            
             # 停止登录状态监控
             if self.login_check_timer:
                 self.root.after_cancel(self.login_check_timer)
@@ -1501,7 +1469,7 @@ class CryptoTrader:
             self.config['url_history'].insert(0, current_url)
             
             # 只保留最近6条记录
-            self.config['url_history'] = self.config['url_history'][:6]
+            self.config['url_history'] = self.config['url_history'][:4]
             
             # 更新下拉列表值
             self.url_entry['values'] = self.config['url_history']
@@ -1598,10 +1566,18 @@ class CryptoTrader:
             if not self.driver:
                 raise Exception("浏览器连接丢失")
             
-            # 等待页面完全加载
-            WebDriverWait(self.driver, 20).until(
-                lambda driver: driver.execute_script('return document.readyState') == 'complete'
-            )
+            # 添加URL检查
+            target_url = self.url_entry.get()
+            current_url = self.driver.current_url
+
+            if target_url != current_url:
+                self.logger.warning(f"检测到URL变化,正在返回监控地址: {target_url}")
+                self.driver.get(target_url)
+                # 等待页面完全加载
+                WebDriverWait(self.driver, 20).until(
+                    lambda driver: driver.execute_script('return document.readyState') == 'complete'
+                )
+                self.update_status("已恢复到监控地址")
             
             try:
                 # 使用JavaScript直接获取价格
