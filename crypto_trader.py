@@ -107,9 +107,9 @@ class CryptoTrader:
         # 检查是否是重启
         self.is_restart = '--restart' in sys.argv
         
-        """# 如果是重启,延迟2秒后自动点击开始监控
+        '''# 如果是重启,延迟2秒后自动点击开始监控
         if self.is_restart:
-            self.root.after(2000, self.auto_start_monitor)"""
+            self.root.after(2000, self.auto_start_monitor)'''
         
         # 添加当前监控网址的属性
         self.current_url = ''
@@ -311,21 +311,25 @@ class CryptoTrader:
         scrollbar.pack(side="right", fill="y")
 
         """创建按钮和输入框样式"""
+
         style = ttk.Style()
         style.configure('Red.TButton', foreground='red', font=('TkDefaultFont', 14, 'bold'))
         style.configure('Black.TButton', foreground='black', font=('TkDefaultFont', 14, 'normal'))
         style.configure('Red.TEntry', foreground='red', font=('TkDefaultFont', 14, 'normal'))
-        style.configure('Blue.TButton', foreground='blue', font=('TkDefaultFont', 14, 'bold'))
+        style.configure('Blue.TButton', foreground='blue', font=('TkDefaultFont', 14, 'normal'))
         style.configure('Blue.TLabel', foreground='blue', font=('TkDefaultFont', 14, 'normal'))
         style.configure('Red.TLabel', foreground='red', font=('TkDefaultFont', 14, 'normal'))
         style.configure('Red.TLabelframe.Label', foreground='red')  # 设置标签文本颜色为红色
+        style.configure('Black.TLabel', foreground='black', font=('TkDefaultFont', 14, 'normal'))
+        
 
         # 金额设置框架
         amount_settings_frame = ttk.LabelFrame(scrollable_frame, text="金额设置", padding=(5, 5))
-        amount_settings_frame.pack(fill="x", padx=5, pady=5)
+        amount_settings_frame.pack(fill="x", padx=5, pady=5, anchor='w')
+
         # 创建一个Frame来水平排列标题和警告
         title_frame = ttk.Frame(amount_settings_frame)
-        title_frame.pack(fill="x", padx=5, pady=0)
+        title_frame.pack(fill="x", padx=5, pady=5)
         # 添加标题和红色警告文本在同一行
         ttk.Label(title_frame, 
                 text="重要:周单开始前先检查 XPATH 是否正确！！！在xpath_config.py 文件中修改！！！",
@@ -334,91 +338,115 @@ class CryptoTrader:
 
         # 创建金额设置容器的内部框架
         settings_container = ttk.Frame(amount_settings_frame)
-        settings_container.pack(expand=True)
+        settings_container.pack(fill=tk.X, anchor='w')
         
-        # 初始金额设置
-        ttk.Label(settings_container, text="初始金额(%):").grid(row=0, column=0, padx=(5,0), pady=5)
-        self.initial_amount_entry = ttk.Entry(settings_container, width=3)
+        # 创建两个独立的Frame
+        amount_frame = ttk.Frame(settings_container)
+        amount_frame.grid(row=0, column=0, sticky='w')
+        trades_frame = ttk.Frame(settings_container)
+        trades_frame.grid(row=1, column=0, sticky='w')
+
+        # 初始金额等输入框放在amount_frame中
+        initial_frame = ttk.Frame(amount_frame)
+        initial_frame.pack(side=tk.LEFT, padx=2)
+        ttk.Label(initial_frame, text="初始金额(%):").pack(side=tk.LEFT)
+        self.initial_amount_entry = ttk.Entry(initial_frame, width=4)
+        self.initial_amount_entry.pack(side=tk.LEFT)
         self.initial_amount_entry.insert(0, "11")
-        self.initial_amount_entry.grid(row=0, column=1, padx=(0,5), pady=5)
         
         # 反水一次设置
-        ttk.Label(settings_container, text="反水一次(%):").grid(row=0, column=2, padx=(5,0), pady=5)
-        self.first_rebound_entry = ttk.Entry(settings_container, width=3)
+        first_frame = ttk.Frame(amount_frame)
+        first_frame.pack(side=tk.LEFT, padx=2)
+        ttk.Label(first_frame, text="反水一次(%):").pack(side=tk.LEFT)
+        self.first_rebound_entry = ttk.Entry(first_frame, width=4)
+        self.first_rebound_entry.pack(side=tk.LEFT)
         self.first_rebound_entry.insert(0, "130")
-        self.first_rebound_entry.grid(row=0, column=3, padx=(0,5), pady=5)
         
         # 反水N次设置
-        ttk.Label(settings_container, text="反水N次(%):").grid(row=0, column=4, padx=(5,0), pady=5)
-        self.n_rebound_entry = ttk.Entry(settings_container, width=3)
+        n_frame = ttk.Frame(amount_frame)
+        n_frame.pack(side=tk.LEFT, padx=2)
+        ttk.Label(n_frame, text="反水N次(%):").pack(side=tk.LEFT)
+        self.n_rebound_entry = ttk.Entry(n_frame, width=4)
+        self.n_rebound_entry.pack(side=tk.LEFT)
         self.n_rebound_entry.insert(0, "112")
-        self.n_rebound_entry.grid(row=0, column=5, padx=(0,5), pady=5)
 
         # 利润率设置
-        ttk.Label(settings_container, text="利润率(%):").grid(row=0, column=6, padx=(5,0), pady=5)
-        self.profit_rate_entry = ttk.Entry(settings_container, width=3)
+        profit_frame = ttk.Frame(amount_frame)
+        profit_frame.pack(side=tk.LEFT, padx=2)
+        ttk.Label(profit_frame, text="利润率(%):").pack(side=tk.LEFT)
+        self.profit_rate_entry = ttk.Entry(profit_frame, width=4)
+        self.profit_rate_entry.pack(side=tk.LEFT)
         self.profit_rate_entry.insert(0, "11")
-        self.profit_rate_entry.grid(row=0, column=7, padx=(0,5), pady=5)
 
         # 翻倍周数
-        ttk.Label(settings_container, text="周翻倍", style='Red.TLabel').grid(row=0, column=9, padx=(0,5), pady=5)
-        self.doubling_weeks_entry = ttk.Entry(settings_container, width=2, style='Red.TEntry')
+        weeks_frame = ttk.Frame(amount_frame)
+        weeks_frame.pack(side=tk.LEFT, padx=2)
+        self.doubling_weeks_entry = ttk.Entry(weeks_frame, width=2, style='Red.TEntry')
+        self.doubling_weeks_entry.pack(side=tk.LEFT)
         self.doubling_weeks_entry.insert(0, "6")
-        self.doubling_weeks_entry.grid(row=0, column=8, padx=(5,0), pady=5)
-        
-        # 交易次数
-        ttk.Label(settings_container, text="交易次数:", style='Blue.TLabel').grid(row=1, column=0, padx=5, pady=5)
-        
+        ttk.Label(weeks_frame, text="周翻倍", style='Red.TLabel').pack(side=tk.LEFT)
+
+        # 交易次数按钮放在trades_frame中
+        ttk.Label(trades_frame, text="交易次数:", style='Black.TLabel').pack(side=tk.LEFT, padx=(2,2))
+
+        buttons_frame = ttk.Frame(trades_frame)
+        buttons_frame.pack(side=tk.LEFT, padx=(0,0))
         # 次数按钮
         self.trade_buttons = {}  # 保存按钮引用
         
         # 10按钮
-        self.trade_buttons["10"] = ttk.Button(settings_container, text="10", width=5, 
+        self.trade_buttons["10"] = ttk.Button(buttons_frame, text="10", width=3, 
                                             command=lambda: self.set_amount_values("10"),
                                             style='Black.TButton')
-        self.trade_buttons["10"].grid(row=1, column=1, padx=3, pady=3)
+        self.trade_buttons["10"].grid(row=1, column=1, padx=2, pady=3)
         
         # 12按钮
-        self.trade_buttons["12"] = ttk.Button(settings_container, text="12", width=5, 
+        self.trade_buttons["12"] = ttk.Button(buttons_frame, text="12", width=3, 
                                             command=lambda: self.set_amount_values("12"),
                                             style='Black.TButton')
-        self.trade_buttons["12"].grid(row=1, column=2, padx=3, pady=3)
+        self.trade_buttons["12"].grid(row=1, column=2, padx=2, pady=3)
         
         # 14按钮
-        self.trade_buttons["14"] = ttk.Button(settings_container, text="14", width=5, 
+        self.trade_buttons["14"] = ttk.Button(buttons_frame, text="14", width=3, 
                                             command=lambda: self.set_amount_values("14"),
                                             style='Blue.TButton')
-        self.trade_buttons["14"].grid(row=1, column=3, padx=3, pady=3)
+        self.trade_buttons["14"].grid(row=1, column=3, padx=2, pady=3)
 
         # 16按钮
-        self.trade_buttons["16"] = ttk.Button(settings_container, text="16", width=5, 
+        self.trade_buttons["16"] = ttk.Button(buttons_frame, text="16", width=3, 
                                             command=lambda: self.set_amount_values("16"),
                                             style='Black.TButton')
-        self.trade_buttons["16"].grid(row=1, column=4, padx=3, pady=3)
+        self.trade_buttons["16"].grid(row=1, column=4, padx=2, pady=3)
         
         # 18按钮
-        self.trade_buttons["18"] = ttk.Button(settings_container, text="18", width=5, 
+        self.trade_buttons["18"] = ttk.Button(buttons_frame, text="18", width=3, 
                                             command=lambda: self.set_amount_values("18"),
                                             style='Black.TButton')
-        self.trade_buttons["18"].grid(row=1, column=5, padx=3, pady=3)
+        self.trade_buttons["18"].grid(row=1, column=5, padx=2, pady=3)
         
         # 20按钮
-        self.trade_buttons["20"] = ttk.Button(settings_container, text="20", width=5, 
+        self.trade_buttons["20"] = ttk.Button(buttons_frame, text="20", width=3, 
                                             command=lambda: self.set_amount_values("20"),
                                             style='Black.TButton')
-        self.trade_buttons["20"].grid(row=1, column=6, padx=3, pady=3)
+        self.trade_buttons["20"].grid(row=1, column=6, padx=2, pady=3)
         
         # 22按钮
-        self.trade_buttons["22"] = ttk.Button(settings_container, text="22", width=5, 
+        self.trade_buttons["22"] = ttk.Button(buttons_frame, text="22", width=3, 
                                             command=lambda: self.set_amount_values("22"),
                                             style='Black.TButton')
-        self.trade_buttons["22"].grid(row=1, column=7, padx=3, pady=3)
+        self.trade_buttons["22"].grid(row=1, column=7, padx=2, pady=3)
+
+        # 添加程序重启按钮
+        self.restart_button = ttk.Button(buttons_frame, text="重启程序", 
+                                         command=self.restart_program, width=6,
+                                         style='Blue.TButton')
+        self.restart_button.grid(row=1, column=8, padx=2, pady=3)
 
         # 配置列权重使输入框均匀分布
         for i in range(8):
             settings_container.grid_columnconfigure(i, weight=1)
         # 设置窗口大小和位置
-        window_width = 750
+        window_width = 700
         window_height = 900
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
@@ -427,12 +455,12 @@ class CryptoTrader:
         self.root.geometry(f'{window_width}x{window_height}+{x}+{y}')
         
         # 监控网站配置
-        url_frame = ttk.LabelFrame(scrollable_frame, text="监控网站配置", padding=(5, 2))
+        url_frame = ttk.LabelFrame(scrollable_frame, text="监控网站配置", padding=(2, 2))
         url_frame.pack(fill="x", padx=10, pady=5)
         ttk.Label(url_frame, text="网站地址:", font=('Arial', 10)).grid(row=0, column=0, padx=5, pady=5)
         
         # 创建下拉列和输入框组合控件
-        self.url_entry = ttk.Combobox(url_frame, width=72)
+        self.url_entry = ttk.Combobox(url_frame, width=62)
         self.url_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
         
         # 从配置文件加载历史记录
@@ -448,45 +476,26 @@ class CryptoTrader:
         # 控制按钮区域
         button_frame = ttk.Frame(scrollable_frame)
         button_frame.pack(fill="x", padx=5, pady=5)
-
-        # 修改样式定义
-        style = ttk.Style()
-        # 确保使用默认主题
-        style.theme_use('default')
-        # 使用map来处理不同状态下的样式
-        style.map('Red.TButton',
-            foreground=[('disabled', 'red'), ('active', 'red'), ('!disabled', 'red')],
-            background=[('disabled', '!focus', 'SystemButtonFace')]
-        )
-        style.map('Black.TButton',
-            foreground=[('disabled', 'black'), ('active', 'black'), ('!disabled', 'black')]
-        )
         
         # 开始和停止按钮
         self.start_button = ttk.Button(button_frame, text="开始监控", 
-                                          command=self.start_monitoring, width=10,
+                                          command=self.start_monitoring, width=8,
                                           style='Black.TButton')  # 默认使用黑色文字
-        self.start_button.pack(side=tk.LEFT, padx=5)
+        self.start_button.pack(side=tk.LEFT, padx=2)
         
         
         self.stop_button = ttk.Button(button_frame, text="停止监控", 
-                                     command=self.stop_monitoring, width=10,
+                                     command=self.stop_monitoring, width=8,
                                      style='Black.TButton')  # 默认使用黑色文字
-        self.stop_button.pack(side=tk.LEFT, padx=5)
+        self.stop_button.pack(side=tk.LEFT, padx=2)
         self.stop_button['state'] = 'disabled'
         
         # 更新下单金额按钮
         self.update_amount_button = ttk.Button(button_frame, text="更新下单金额", 
                                              command=self.set_yes_no_cash, width=10,
                                              style='Black.TButton')  # 默认使用黑色文字
-        self.update_amount_button.pack(side=tk.LEFT, padx=5)
+        self.update_amount_button.pack(side=tk.LEFT, padx=2)
         self.update_amount_button['state'] = 'disabled'  # 初始禁用
-
-        # 添加程序重启按钮
-        self.restart_button = ttk.Button(button_frame, text="重启程序", 
-                                         command=self.restart_program, width=10,
-                                         style='Black.TButton')  # 默认使用黑色文字
-        self.restart_button.pack(side=tk.LEFT, padx=5)
 
         # 添加价格按钮
         prices = ['0.52', '0.53', '0.54']
@@ -496,13 +505,13 @@ class CryptoTrader:
                 text=price,
                 width=4,
                 command=lambda p=price: self.set_default_price(p),
-                style='Blue.TButton' if price == '0.52' else 'Black.TButton'
+                style='Red.TButton' if price == '0.52' else 'Black.TButton'
             )
             btn.pack(side=tk.LEFT, padx=2)
         
         # 交易币对显示区域
         pair_frame = ttk.Frame(scrollable_frame)
-        pair_frame.pack(fill="x", padx=10, pady=5)
+        pair_frame.pack(fill="x", padx=2, pady=5)
         
         # 添加交易币对显示区域
         pair_container = ttk.Frame(pair_frame)
@@ -510,7 +519,7 @@ class CryptoTrader:
         
         # 交易币种及日期，颜色为蓝色
         ttk.Label(pair_container, text="交易币种及日期:", 
-                 font=('Arial', 16), foreground='blue').pack(side=tk.LEFT, padx=5)
+                 font=('Arial', 14), foreground='blue').pack(side=tk.LEFT, padx=5)
         self.trading_pair_label = ttk.Label(pair_container, text="--", 
                                         font=('Arial', 16, 'bold'), foreground='blue')
         self.trading_pair_label.pack(side=tk.LEFT, padx=5)
@@ -525,12 +534,12 @@ class CryptoTrader:
         
         # Yes价格显示
         self.yes_price_label = ttk.Label(prices_container, text="Yes: 等待数据...", 
-                                        font=('Arial', 20), foreground='red')
+                                        font=('Arial', 20), foreground='#9370DB')
         self.yes_price_label.pack(side=tk.LEFT, padx=20)
         
         # No价格显示
         self.no_price_label = ttk.Label(prices_container, text="No: 等待数据...", 
-                                       font=('Arial', 20), foreground='red')
+                                       font=('Arial', 20), foreground='#9370DB')
         self.no_price_label.pack(side=tk.LEFT, padx=20)
         
         # 最后更新时间 - 靠右下对齐
@@ -563,22 +572,22 @@ class CryptoTrader:
         
         # 创建Yes/No
         config_frame = ttk.Frame(scrollable_frame)
-        config_frame.pack(fill="x", padx=5, pady=5)
+        config_frame.pack(fill="x", padx=2, pady=5)
         
         # 左右分栏显示Yes/No配置
-        self.yes_frame = ttk.LabelFrame(config_frame, text="Yes配置", padding=(3, 3))
-        self.yes_frame.grid(row=0, column=0, padx=5, sticky="ew")
+        self.yes_frame = ttk.LabelFrame(config_frame, text="Yes配置", padding=(2, 3))
+        self.yes_frame.grid(row=0, column=0, padx=2, sticky="ew")
         config_frame.grid_columnconfigure(0, weight=1)
         
-        ttk.Label(self.yes_frame, text="Yes 0 价格($):", font=('Arial', 12)).grid(row=0, column=0, padx=3, pady=3)
+        ttk.Label(self.yes_frame, text="Yes 0 价格($):", font=('Arial', 12)).grid(row=0, column=0, padx=2, pady=3)
         self.yes_price_entry = ttk.Entry(self.yes_frame)
         self.yes_price_entry.insert(0, str(self.config['trading']['Yes0']['target_price']))
-        self.yes_price_entry.grid(row=0, column=1, padx=3, pady=3, sticky="ew")
+        self.yes_price_entry.grid(row=0, column=1, padx=2, pady=3, sticky="ew")
         
-        ttk.Label(self.yes_frame, text="Yes 0 金额:", font=('Arial', 12)).grid(row=1, column=0, padx=3, pady=3)
+        ttk.Label(self.yes_frame, text="Yes 0 金额:", font=('Arial', 12)).grid(row=1, column=0, padx=2, pady=3)
         self.yes_amount_entry = ttk.Entry(self.yes_frame)
         self.yes_amount_entry.insert(0, str(self.config['trading']['Yes0']['amount']))
-        self.yes_amount_entry.grid(row=1, column=1, padx=3, pady=3, sticky="ew")
+        self.yes_amount_entry.grid(row=1, column=1, padx=2, pady=3, sticky="ew")
 
         # 直接创建所有Yes Entry对象并设置默认值
         self.yes1_price_entry = tk.Entry(self.yes_frame)
@@ -642,52 +651,52 @@ class CryptoTrader:
         self.yes30_price_entry = tk.Entry(self.yes_frame)
         self.yes30_price_entry.insert(0, "0.00")
         # 设置它们的grid布局
-        self.yes1_price_entry.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
-        self.yes2_price_entry.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
-        self.yes3_price_entry.grid(row=6, column=1, padx=5, pady=5, sticky="ew")
-        self.yes4_price_entry.grid(row=8, column=1, padx=5, pady=5, sticky="ew")
-        self.yes5_price_entry.grid(row=10, column=1, padx=5, pady=5, sticky="ew")
-        self.yes6_price_entry.grid(row=12, column=1, padx=5, pady=5, sticky="ew")
-        self.yes7_price_entry.grid(row=14, column=1, padx=5, pady=5, sticky="ew")
-        self.yes8_price_entry.grid(row=16, column=1, padx=5, pady=5, sticky="ew")
-        self.yes9_price_entry.grid(row=18, column=1, padx=5, pady=5, sticky="ew")
-        self.yes10_price_entry.grid(row=20, column=1, padx=5, pady=5, sticky="ew")
-        self.yes11_price_entry.grid(row=22, column=1, padx=5, pady=5, sticky="ew")
-        self.yes12_price_entry.grid(row=24, column=1, padx=5, pady=5, sticky="ew")
-        self.yes13_price_entry.grid(row=26, column=1, padx=5, pady=5, sticky="ew")
-        self.yes14_price_entry.grid(row=28, column=1, padx=5, pady=5, sticky="ew")
-        self.yes15_price_entry.grid(row=30, column=1, padx=5, pady=5, sticky="ew")
-        self.yes16_price_entry.grid(row=32, column=1, padx=5, pady=5, sticky="ew")
-        self.yes17_price_entry.grid(row=34, column=1, padx=5, pady=5, sticky="ew")
-        self.yes18_price_entry.grid(row=36, column=1, padx=5, pady=5, sticky="ew")
-        self.yes19_price_entry.grid(row=38, column=1, padx=5, pady=5, sticky="ew")
-        self.yes20_price_entry.grid(row=40, column=1, padx=5, pady=5, sticky="ew")
-        self.yes21_price_entry.grid(row=42, column=1, padx=5, pady=5, sticky="ew")
-        self.yes22_price_entry.grid(row=44, column=1, padx=5, pady=5, sticky="ew")
-        self.yes23_price_entry.grid(row=46, column=1, padx=5, pady=5, sticky="ew")
-        self.yes24_price_entry.grid(row=48, column=1, padx=5, pady=5, sticky="ew")
-        self.yes25_price_entry.grid(row=50, column=1, padx=5, pady=5, sticky="ew")
-        self.yes26_price_entry.grid(row=52, column=1, padx=5, pady=5, sticky="ew")
-        self.yes27_price_entry.grid(row=54, column=1, padx=5, pady=5, sticky="ew")
-        self.yes28_price_entry.grid(row=56, column=1, padx=5, pady=5, sticky="ew")
-        self.yes29_price_entry.grid(row=58, column=1, padx=5, pady=5, sticky="ew")
-        self.yes30_price_entry.grid(row=60, column=1, padx=5, pady=5, sticky="ew")
+        self.yes1_price_entry.grid(row=2, column=1, padx=2, pady=5, sticky="ew")
+        self.yes2_price_entry.grid(row=4, column=1, padx=2, pady=5, sticky="ew")
+        self.yes3_price_entry.grid(row=6, column=1, padx=2, pady=5, sticky="ew")
+        self.yes4_price_entry.grid(row=8, column=1, padx=2, pady=5, sticky="ew")
+        self.yes5_price_entry.grid(row=10, column=1, padx=2, pady=5, sticky="ew")
+        self.yes6_price_entry.grid(row=12, column=1, padx=2, pady=5, sticky="ew")
+        self.yes7_price_entry.grid(row=14, column=1, padx=2, pady=5, sticky="ew")
+        self.yes8_price_entry.grid(row=16, column=1, padx=2, pady=5, sticky="ew")
+        self.yes9_price_entry.grid(row=18, column=1, padx=2, pady=5, sticky="ew")
+        self.yes10_price_entry.grid(row=20, column=1, padx=2, pady=5, sticky="ew")
+        self.yes11_price_entry.grid(row=22, column=1, padx=2, pady=5, sticky="ew")
+        self.yes12_price_entry.grid(row=24, column=1, padx=2, pady=5, sticky="ew")
+        self.yes13_price_entry.grid(row=26, column=1, padx=2, pady=5, sticky="ew")
+        self.yes14_price_entry.grid(row=28, column=1, padx=2, pady=5, sticky="ew")
+        self.yes15_price_entry.grid(row=30, column=1, padx=2, pady=5, sticky="ew")
+        self.yes16_price_entry.grid(row=32, column=1, padx=2, pady=5, sticky="ew")
+        self.yes17_price_entry.grid(row=34, column=1, padx=2, pady=5, sticky="ew")
+        self.yes18_price_entry.grid(row=36, column=1, padx=2, pady=5, sticky="ew")
+        self.yes19_price_entry.grid(row=38, column=1, padx=2, pady=5, sticky="ew")
+        self.yes20_price_entry.grid(row=40, column=1, padx=2, pady=5, sticky="ew")
+        self.yes21_price_entry.grid(row=42, column=1, padx=2, pady=5, sticky="ew")
+        self.yes22_price_entry.grid(row=44, column=1, padx=2, pady=5, sticky="ew")
+        self.yes23_price_entry.grid(row=46, column=1, padx=2, pady=5, sticky="ew")
+        self.yes24_price_entry.grid(row=48, column=1, padx=2, pady=5, sticky="ew")
+        self.yes25_price_entry.grid(row=50, column=1, padx=2, pady=5, sticky="ew")
+        self.yes26_price_entry.grid(row=52, column=1, padx=2, pady=5, sticky="ew")
+        self.yes27_price_entry.grid(row=54, column=1, padx=2, pady=5, sticky="ew")
+        self.yes28_price_entry.grid(row=56, column=1, padx=2, pady=5, sticky="ew")
+        self.yes29_price_entry.grid(row=58, column=1, padx=2, pady=5, sticky="ew")
+        self.yes30_price_entry.grid(row=60, column=1, padx=2, pady=5, sticky="ew")
         
         # 修改Yes1-5的默认价格值
         for i in range(5):  # 改为range(5)以包含Yes 5
-            ttk.Label(self.yes_frame, text=f"Yes {i+1} 价格($):", font=('Arial', 12)).grid(row=i*2+2, column=0, padx=5, pady=5)
+            ttk.Label(self.yes_frame, text=f"Yes {i+1} 价格($):", font=('Arial', 12)).grid(row=i*2+2, column=0, padx=2, pady=5)
             # 设置默认价格为0.00
             getattr(self, f'yes{i+1}_price_entry').delete(0, tk.END)
             getattr(self, f'yes{i+1}_price_entry').insert(0, "0.00")
             
-            ttk.Label(self.yes_frame, text=f"Yes {i+1} 金额:", font=('Arial', 12)).grid(row=i*2+3, column=0, padx=5, pady=5)
+            ttk.Label(self.yes_frame, text=f"Yes {i+1} 金额:", font=('Arial', 12)).grid(row=i*2+3, column=0, padx=2, pady=5)
             amount_entry = ttk.Entry(self.yes_frame)
             amount_entry.insert(0, "0.0")
-            amount_entry.grid(row=i*2+3, column=1, padx=5, pady=5, sticky="ew")
+            amount_entry.grid(row=i*2+3, column=1, padx=2, pady=5, sticky="ew")
         # Yes 6-30 配置
         for i in range(6, 31):  # 6-30
-            ttk.Label(self.yes_frame, text=f"Yes {i} 价格($):", font=('Arial', 12)).grid(row=i*2, column=0, padx=5, pady=5)
-            ttk.Label(self.yes_frame, text=f"Yes {i} 金额:", font=('Arial', 12)).grid(row=i*2+1, column=0, padx=5, pady=5)
+            ttk.Label(self.yes_frame, text=f"Yes {i} 价格($):", font=('Arial', 12)).grid(row=i*2, column=0, padx=2, pady=5)
+            ttk.Label(self.yes_frame, text=f"Yes {i} 金额:", font=('Arial', 12)).grid(row=i*2+1, column=0, padx=2, pady=5)
             
             # 设置价格输入框
             price_entry = getattr(self, f'yes{i}_price_entry')
@@ -697,22 +706,22 @@ class CryptoTrader:
             # 设置金额输入框
             amount_entry = ttk.Entry(self.yes_frame)
             amount_entry.insert(0, "0.0")  # 设置默认金额
-            amount_entry.grid(row=i*2+1, column=1, padx=5, pady=5, sticky="ew")
+            amount_entry.grid(row=i*2+1, column=1, padx=2, pady=5, sticky="ew")
 
         # No 配置区域
         self.no_frame = ttk.LabelFrame(config_frame, text="No配置", padding=(10, 5))
-        self.no_frame.grid(row=0, column=1, padx=5, sticky="ew")
+        self.no_frame.grid(row=0, column=1, padx=2, sticky="ew")
         config_frame.grid_columnconfigure(1, weight=1)
         
-        ttk.Label(self.no_frame, text="No 0 价格($):", font=('Arial', 12)).grid(row=0, column=0, padx=5, pady=5)
+        ttk.Label(self.no_frame, text="No 0 价格($):", font=('Arial', 12)).grid(row=0, column=0, padx=2, pady=5)
         self.no_price_entry = ttk.Entry(self.no_frame)
         self.no_price_entry.insert(0, str(self.config['trading']['No0']['target_price']))
-        self.no_price_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.no_price_entry.grid(row=0, column=1, padx=2, pady=5, sticky="ew")
         
-        ttk.Label(self.no_frame, text="No 0 金额:", font=('Arial', 12)).grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(self.no_frame, text="No 0 金额:", font=('Arial', 12)).grid(row=1, column=0, padx=2, pady=5)
         self.no_amount_entry = ttk.Entry(self.no_frame)
         self.no_amount_entry.insert(0, str(self.config['trading']['No0']['amount']))
-        self.no_amount_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        self.no_amount_entry.grid(row=1, column=1, padx=2, pady=5, sticky="ew")
 
         # 直接创建所有No Entry对象并设置默认值
         self.no1_price_entry = tk.Entry(self.no_frame)
@@ -776,52 +785,52 @@ class CryptoTrader:
         self.no30_price_entry = tk.Entry(self.no_frame)
         self.no30_price_entry.insert(0, "0.00")
         # 设置它们的grid布局
-        self.no1_price_entry.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
-        self.no2_price_entry.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
-        self.no3_price_entry.grid(row=6, column=1, padx=5, pady=5, sticky="ew")
-        self.no4_price_entry.grid(row=8, column=1, padx=5, pady=5, sticky="ew")
-        self.no5_price_entry.grid(row=10, column=1, padx=5, pady=5, sticky="ew")
-        self.no6_price_entry.grid(row=12, column=1, padx=5, pady=5, sticky="ew")
-        self.no7_price_entry.grid(row=14, column=1, padx=5, pady=5, sticky="ew")
-        self.no8_price_entry.grid(row=16, column=1, padx=5, pady=5, sticky="ew")
-        self.no9_price_entry.grid(row=18, column=1, padx=5, pady=5, sticky="ew")
-        self.no10_price_entry.grid(row=20, column=1, padx=5, pady=5, sticky="ew")
-        self.no11_price_entry.grid(row=22, column=1, padx=5, pady=5, sticky="ew")
-        self.no12_price_entry.grid(row=24, column=1, padx=5, pady=5, sticky="ew")
-        self.no13_price_entry.grid(row=26, column=1, padx=5, pady=5, sticky="ew")
-        self.no14_price_entry.grid(row=28, column=1, padx=5, pady=5, sticky="ew")
-        self.no15_price_entry.grid(row=30, column=1, padx=5, pady=5, sticky="ew")
-        self.no16_price_entry.grid(row=32, column=1, padx=5, pady=5, sticky="ew")
-        self.no17_price_entry.grid(row=34, column=1, padx=5, pady=5, sticky="ew")
-        self.no18_price_entry.grid(row=36, column=1, padx=5, pady=5, sticky="ew")
-        self.no19_price_entry.grid(row=38, column=1, padx=5, pady=5, sticky="ew")
-        self.no20_price_entry.grid(row=40, column=1, padx=5, pady=5, sticky="ew")
-        self.no21_price_entry.grid(row=42, column=1, padx=5, pady=5, sticky="ew")
-        self.no22_price_entry.grid(row=44, column=1, padx=5, pady=5, sticky="ew")
-        self.no23_price_entry.grid(row=46, column=1, padx=5, pady=5, sticky="ew")
-        self.no24_price_entry.grid(row=48, column=1, padx=5, pady=5, sticky="ew")
-        self.no25_price_entry.grid(row=50, column=1, padx=5, pady=5, sticky="ew")
-        self.no26_price_entry.grid(row=52, column=1, padx=5, pady=5, sticky="ew")
-        self.no27_price_entry.grid(row=54, column=1, padx=5, pady=5, sticky="ew")
-        self.no28_price_entry.grid(row=56, column=1, padx=5, pady=5, sticky="ew")
-        self.no29_price_entry.grid(row=58, column=1, padx=5, pady=5, sticky="ew")
-        self.no30_price_entry.grid(row=60, column=1, padx=5, pady=5, sticky="ew")
+        self.no1_price_entry.grid(row=2, column=1, padx=2, pady=5, sticky="ew")
+        self.no2_price_entry.grid(row=4, column=1, padx=2, pady=5, sticky="ew")
+        self.no3_price_entry.grid(row=6, column=1, padx=2, pady=5, sticky="ew")
+        self.no4_price_entry.grid(row=8, column=1, padx=2, pady=5, sticky="ew")
+        self.no5_price_entry.grid(row=10, column=1, padx=2, pady=5, sticky="ew")
+        self.no6_price_entry.grid(row=12, column=1, padx=2, pady=5, sticky="ew")
+        self.no7_price_entry.grid(row=14, column=1, padx=2, pady=5, sticky="ew")
+        self.no8_price_entry.grid(row=16, column=1, padx=2, pady=5, sticky="ew")
+        self.no9_price_entry.grid(row=18, column=1, padx=2, pady=5, sticky="ew")
+        self.no10_price_entry.grid(row=20, column=1, padx=2, pady=5, sticky="ew")
+        self.no11_price_entry.grid(row=22, column=1, padx=2, pady=5, sticky="ew")
+        self.no12_price_entry.grid(row=24, column=1, padx=2, pady=5, sticky="ew")
+        self.no13_price_entry.grid(row=26, column=1, padx=2, pady=5, sticky="ew")
+        self.no14_price_entry.grid(row=28, column=1, padx=2, pady=5, sticky="ew")
+        self.no15_price_entry.grid(row=30, column=1, padx=2, pady=5, sticky="ew")
+        self.no16_price_entry.grid(row=32, column=1, padx=2, pady=5, sticky="ew")
+        self.no17_price_entry.grid(row=34, column=1, padx=2, pady=5, sticky="ew")
+        self.no18_price_entry.grid(row=36, column=1, padx=2, pady=5, sticky="ew")
+        self.no19_price_entry.grid(row=38, column=1, padx=2, pady=5, sticky="ew")
+        self.no20_price_entry.grid(row=40, column=1, padx=2, pady=5, sticky="ew")
+        self.no21_price_entry.grid(row=42, column=1, padx=2, pady=5, sticky="ew")
+        self.no22_price_entry.grid(row=44, column=1, padx=2, pady=5, sticky="ew")
+        self.no23_price_entry.grid(row=46, column=1, padx=2, pady=5, sticky="ew")
+        self.no24_price_entry.grid(row=48, column=1, padx=2, pady=5, sticky="ew")
+        self.no25_price_entry.grid(row=50, column=1, padx=2, pady=5, sticky="ew")
+        self.no26_price_entry.grid(row=52, column=1, padx=2, pady=5, sticky="ew")
+        self.no27_price_entry.grid(row=54, column=1, padx=2, pady=5, sticky="ew")
+        self.no28_price_entry.grid(row=56, column=1, padx=2, pady=5, sticky="ew")
+        self.no29_price_entry.grid(row=58, column=1, padx=2, pady=5, sticky="ew")
+        self.no30_price_entry.grid(row=60, column=1, padx=2, pady=5, sticky="ew")
         
         for i in range(5):
-            ttk.Label(self.no_frame, text=f"No {i+1} 价格($):", font=('Arial', 12)).grid(row=i*2+2, column=0, padx=5, pady=5)
-            ttk.Label(self.no_frame, text=f"No {i+1} 金额:", font=('Arial', 12)).grid(row=i*2+3, column=0, padx=5, pady=5)
+            ttk.Label(self.no_frame, text=f"No {i+1} 价格($):", font=('Arial', 12)).grid(row=i*2+2, column=0, padx=2, pady=5)
+            ttk.Label(self.no_frame, text=f"No {i+1} 金额:", font=('Arial', 12)).grid(row=i*2+3, column=0, padx=2, pady=5)
             # 设置默认价格为0.00
             getattr(self, f'no{i+1}_price_entry').delete(0, tk.END)
             getattr(self, f'no{i+1}_price_entry').insert(0, "0.00")
             
-            ttk.Label(self.no_frame, text=f"No {i+1} 金额:", font=('Arial', 12)).grid(row=i*2+3, column=0, padx=5, pady=5)
+            ttk.Label(self.no_frame, text=f"No {i+1} 金额:", font=('Arial', 12)).grid(row=i*2+3, column=0, padx=2, pady=5)
             amount_entry = ttk.Entry(self.no_frame)
             amount_entry.insert(0, "0.0")
-            amount_entry.grid(row=i*2+3, column=1, padx=5, pady=5, sticky="ew")
+            amount_entry.grid(row=i*2+3, column=1, padx=2, pady=5, sticky="ew")
         # No 6-30配置
         for i in range(6, 31):  # 6-30
-            ttk.Label(self.no_frame, text=f"No {i} 价格($):", font=('Arial', 12)).grid(row=i*2, column=0, padx=5, pady=5)
-            ttk.Label(self.no_frame, text=f"No {i} 金额:", font=('Arial', 12)).grid(row=i*2+1, column=0, padx=5, pady=5)
+            ttk.Label(self.no_frame, text=f"No {i} 价格($):", font=('Arial', 12)).grid(row=i*2, column=0, padx=2, pady=5)
+            ttk.Label(self.no_frame, text=f"No {i} 金额:", font=('Arial', 12)).grid(row=i*2+1, column=0, padx=2, pady=5)
             
             # 设置价格输入框
             price_entry = getattr(self, f'no{i}_price_entry')
@@ -831,283 +840,283 @@ class CryptoTrader:
             # 设置金额输入框
             amount_entry = ttk.Entry(self.no_frame)
             amount_entry.insert(0, "0.0")  # 设置默认金额
-            amount_entry.grid(row=i*2+1, column=1, padx=5, pady=5, sticky="ew")
+            amount_entry.grid(row=i*2+1, column=1, padx=2, pady=5, sticky="ew")
 
         # 修改买入按钮区域
-        buy_frame = ttk.LabelFrame(scrollable_frame, text="买入按钮", padding=(5, 5))
-        buy_frame.pack(fill="x", padx=5, pady=5)
+        buy_frame = ttk.LabelFrame(scrollable_frame, text="买入按钮", padding=(2, 0))
+        buy_frame.pack(fill="x", padx=(0,0), pady=5)
 
         # 创建按钮框架
         buy_button_frame = ttk.Frame(buy_frame)
-        buy_button_frame.pack(expand=True)  # 添加expand=True使容器居中
+        buy_button_frame.pack(side=tk.LEFT, padx=2)  # 添加expand=True使容器居中
 
         # 第一行按钮
-        self.buy_button = ttk.Button(buy_button_frame, text="Buy", width=15,
+        self.buy_button = ttk.Button(buy_button_frame, text="Buy", width=10,
                                     command=self.click_buy)
         self.buy_button.grid(row=0, column=0, padx=5, pady=5)
 
-        self.buy_yes_button = ttk.Button(buy_button_frame, text="Buy-Yes", width=15,
+        self.buy_yes_button = ttk.Button(buy_button_frame, text="Buy-Yes", width=10,
                                         command=self.click_buy_yes)
         self.buy_yes_button.grid(row=0, column=1, padx=5, pady=5)
 
-        self.buy_no_button = ttk.Button(buy_button_frame, text="Buy-No", width=15,
+        self.buy_no_button = ttk.Button(buy_button_frame, text="Buy-No", width=10,
                                        command=self.click_buy_no)
         self.buy_no_button.grid(row=0, column=2, padx=5, pady=5)
 
-        self.buy_confirm_button = ttk.Button(buy_button_frame, text="Buy-买入", width=15,
+        self.buy_confirm_button = ttk.Button(buy_button_frame, text="Buy-买入", width=10,
                                             command=lambda: self.click_website_button("Buy-Confirm"))
         self.buy_confirm_button.grid(row=0, column=3, padx=5, pady=5)
 
         # 第二行按钮
-        self.amount_button = ttk.Button(buy_button_frame, text="Amount-Yes0", width=15)
+        self.amount_button = ttk.Button(buy_button_frame, text="Amount-Yes0", width=10)
         self.amount_button.bind('<Button-1>', self.click_amount)
         self.amount_button.grid(row=1, column=0, padx=5, pady=5)
 
-        self.amount_yes1_button = ttk.Button(buy_button_frame, text="Amount-Yes1", width=15)
+        self.amount_yes1_button = ttk.Button(buy_button_frame, text="Amount-Yes1", width=10)
         self.amount_yes1_button.bind('<Button-1>', self.click_amount)
         self.amount_yes1_button.grid(row=1, column=1, padx=5, pady=5)
 
-        self.amount_yes2_button = ttk.Button(buy_button_frame, text="Amount-Yes2", width=15)
+        self.amount_yes2_button = ttk.Button(buy_button_frame, text="Amount-Yes2", width=10)
         self.amount_yes2_button.bind('<Button-1>', self.click_amount)
         self.amount_yes2_button.grid(row=1, column=2, padx=5, pady=5)
 
-        self.amount_yes3_button = ttk.Button(buy_button_frame, text="Amount-Yes3", width=15)
+        self.amount_yes3_button = ttk.Button(buy_button_frame, text="Amount-Yes3", width=10)
         self.amount_yes3_button.bind('<Button-1>', self.click_amount)
         self.amount_yes3_button.grid(row=1, column=3, padx=5, pady=5)
 
         # 第三行按钮
-        self.amount_yes4_button = ttk.Button(buy_button_frame, text="Amount-Yes4", width=15)
+        self.amount_yes4_button = ttk.Button(buy_button_frame, text="Amount-Yes4", width=10)
         self.amount_yes4_button.bind('<Button-1>', self.click_amount)
         self.amount_yes4_button.grid(row=2, column=0, padx=5, pady=5)
 
-        self.amount_yes5_button = ttk.Button(buy_button_frame, text="Amount-Yes5", width=15)
+        self.amount_yes5_button = ttk.Button(buy_button_frame, text="Amount-Yes5", width=10)
         self.amount_yes5_button.bind('<Button-1>', self.click_amount)
         self.amount_yes5_button.grid(row=2, column=1, padx=5, pady=5)
 
-        self.amount_yes6_button = ttk.Button(buy_button_frame, text="Amount-Yes6", width=15)
+        self.amount_yes6_button = ttk.Button(buy_button_frame, text="Amount-Yes6", width=10)
         self.amount_yes6_button.bind('<Button-1>', self.click_amount)
         self.amount_yes6_button.grid(row=2, column=2, padx=5, pady=5)
 
-        self.amount_yes7_button = ttk.Button(buy_button_frame, text="Amount-Yes7", width=15)
+        self.amount_yes7_button = ttk.Button(buy_button_frame, text="Amount-Yes7", width=10)
         self.amount_yes7_button.bind('<Button-1>', self.click_amount)
         self.amount_yes7_button.grid(row=2, column=3, padx=5, pady=5)
 
         # 第四行按钮
-        self.amount_yes8_button = ttk.Button(buy_button_frame, text="Amount-Yes8", width=15)
+        self.amount_yes8_button = ttk.Button(buy_button_frame, text="Amount-Yes8", width=10)
         self.amount_yes8_button.bind('<Button-1>', self.click_amount)
         self.amount_yes8_button.grid(row=3, column=0, padx=5, pady=5)
 
-        self.amount_yes9_button = ttk.Button(buy_button_frame, text="Amount-Yes9", width=15)
+        self.amount_yes9_button = ttk.Button(buy_button_frame, text="Amount-Yes9", width=10)
         self.amount_yes9_button.bind('<Button-1>', self.click_amount)
         self.amount_yes9_button.grid(row=3, column=1, padx=5, pady=5)
 
-        self.amount_yes10_button = ttk.Button(buy_button_frame, text="Amount-Yes10", width=15)
+        self.amount_yes10_button = ttk.Button(buy_button_frame, text="Amount-Yes10", width=10)
         self.amount_yes10_button.bind('<Button-1>', self.click_amount)
         self.amount_yes10_button.grid(row=3, column=2, padx=5, pady=5)
 
-        self.amount_yes11_button = ttk.Button(buy_button_frame, text="Amount-Yes11", width=15)
+        self.amount_yes11_button = ttk.Button(buy_button_frame, text="Amount-Yes11", width=10)
         self.amount_yes11_button.bind('<Button-1>', self.click_amount)
         self.amount_yes11_button.grid(row=3, column=3, padx=5, pady=5)
 
         # 第五行按钮
-        self.amount_yes12_button = ttk.Button(buy_button_frame, text="Amount-Yes12", width=15)
+        self.amount_yes12_button = ttk.Button(buy_button_frame, text="Amount-Yes12", width=10)
         self.amount_yes12_button.bind('<Button-1>', self.click_amount)
         self.amount_yes12_button.grid(row=4, column=0, padx=5, pady=5)
 
-        self.amount_yes13_button = ttk.Button(buy_button_frame, text="Amount-Yes13", width=15)
+        self.amount_yes13_button = ttk.Button(buy_button_frame, text="Amount-Yes13", width=10)
         self.amount_yes13_button.bind('<Button-1>', self.click_amount)
         self.amount_yes13_button.grid(row=4, column=1, padx=5, pady=5)
 
-        self.amount_yes14_button = ttk.Button(buy_button_frame, text="Amount-Yes14", width=15)
+        self.amount_yes14_button = ttk.Button(buy_button_frame, text="Amount-Yes14", width=10)
         self.amount_yes14_button.bind('<Button-1>', self.click_amount)
         self.amount_yes14_button.grid(row=4, column=2, padx=5, pady=5)
 
-        self.amount_yes15_button = ttk.Button(buy_button_frame, text="Amount-Yes15", width=15)
+        self.amount_yes15_button = ttk.Button(buy_button_frame, text="Amount-Yes15", width=10)
         self.amount_yes15_button.bind('<Button-1>', self.click_amount)
         self.amount_yes15_button.grid(row=4, column=3, padx=5, pady=5)
         # 第六行按钮
-        self.amount_yes16_button = ttk.Button(buy_button_frame, text="Amount-Yes16", width=15)
+        self.amount_yes16_button = ttk.Button(buy_button_frame, text="Amount-Yes16", width=10)
         self.amount_yes16_button.bind('<Button-1>', self.click_amount)
         self.amount_yes16_button.grid(row=5, column=0, padx=5, pady=5)
 
-        self.amount_yes17_button = ttk.Button(buy_button_frame, text="Amount-Yes17", width=15)
+        self.amount_yes17_button = ttk.Button(buy_button_frame, text="Amount-Yes17", width=10)
         self.amount_yes17_button.bind('<Button-1>', self.click_amount)
         self.amount_yes17_button.grid(row=5, column=1, padx=5, pady=5)
 
-        self.amount_yes18_button = ttk.Button(buy_button_frame, text="Amount-Yes18", width=15)
+        self.amount_yes18_button = ttk.Button(buy_button_frame, text="Amount-Yes18", width=10)
         self.amount_yes18_button.bind('<Button-1>', self.click_amount)
         self.amount_yes18_button.grid(row=5, column=2, padx=5, pady=5)
 
-        self.amount_yes19_button = ttk.Button(buy_button_frame, text="Amount-Yes19", width=15)
+        self.amount_yes19_button = ttk.Button(buy_button_frame, text="Amount-Yes19", width=10)
         self.amount_yes19_button.bind('<Button-1>', self.click_amount)
         self.amount_yes19_button.grid(row=5, column=3, padx=5, pady=5)
         # 第七行按钮
-        self.amount_yes20_button = ttk.Button(buy_button_frame, text="Amount-Yes20", width=15)
+        self.amount_yes20_button = ttk.Button(buy_button_frame, text="Amount-Yes20", width=10)
         self.amount_yes20_button.bind('<Button-1>', self.click_amount)
         self.amount_yes20_button.grid(row=6, column=0, padx=5, pady=5)
 
-        self.amount_yes21_button = ttk.Button(buy_button_frame, text="Amount-Yes21", width=15)
+        self.amount_yes21_button = ttk.Button(buy_button_frame, text="Amount-Yes21", width=10)
         self.amount_yes21_button.bind('<Button-1>', self.click_amount)
         self.amount_yes21_button.grid(row=6, column=1, padx=5, pady=5)
 
-        self.amount_yes22_button = ttk.Button(buy_button_frame, text="Amount-Yes22", width=15)
+        self.amount_yes22_button = ttk.Button(buy_button_frame, text="Amount-Yes22", width=10)
         self.amount_yes22_button.bind('<Button-1>', self.click_amount)
         self.amount_yes22_button.grid(row=6, column=2, padx=5, pady=5)
 
-        self.amount_yes23_button = ttk.Button(buy_button_frame, text="Amount-Yes23", width=15)
+        self.amount_yes23_button = ttk.Button(buy_button_frame, text="Amount-Yes23", width=10)
         self.amount_yes23_button.bind('<Button-1>', self.click_amount)
         self.amount_yes23_button.grid(row=6, column=3, padx=5, pady=5)
         # 第八行按钮
-        self.amount_yes24_button = ttk.Button(buy_button_frame, text="Amount-Yes24", width=15)      
+        self.amount_yes24_button = ttk.Button(buy_button_frame, text="Amount-Yes24", width=10)      
         self.amount_yes24_button.bind('<Button-1>', self.click_amount)
         self.amount_yes24_button.grid(row=7, column=0, padx=5, pady=5)
         
-        self.amount_yes25_button = ttk.Button(buy_button_frame, text="Amount-Yes25", width=15)  
+        self.amount_yes25_button = ttk.Button(buy_button_frame, text="Amount-Yes25", width=10)  
         self.amount_yes25_button.bind('<Button-1>', self.click_amount)
         self.amount_yes25_button.grid(row=7, column=1, padx=5, pady=5)
         
-        self.amount_yes26_button = ttk.Button(buy_button_frame, text="Amount-Yes26", width=15)  
+        self.amount_yes26_button = ttk.Button(buy_button_frame, text="Amount-Yes26", width=10)  
         self.amount_yes26_button.bind('<Button-1>', self.click_amount)
         self.amount_yes26_button.grid(row=7, column=2, padx=5, pady=5)
         
-        self.amount_yes27_button = ttk.Button(buy_button_frame, text="Amount-Yes27", width=15)  
+        self.amount_yes27_button = ttk.Button(buy_button_frame, text="Amount-Yes27", width=10)  
         self.amount_yes27_button.bind('<Button-1>', self.click_amount)
         self.amount_yes27_button.grid(row=7, column=3, padx=5, pady=5)
         # 第九行按钮
-        self.amount_yes28_button = ttk.Button(buy_button_frame, text="Amount-Yes28", width=15)  
+        self.amount_yes28_button = ttk.Button(buy_button_frame, text="Amount-Yes28", width=10)  
         self.amount_yes28_button.bind('<Button-1>', self.click_amount)
         self.amount_yes28_button.grid(row=8, column=0, padx=5, pady=5)
         
-        self.amount_yes29_button = ttk.Button(buy_button_frame, text="Amount-Yes29", width=15)  
+        self.amount_yes29_button = ttk.Button(buy_button_frame, text="Amount-Yes29", width=10)  
         self.amount_yes29_button.bind('<Button-1>', self.click_amount)
         self.amount_yes29_button.grid(row=8, column=1, padx=5, pady=5)
         
-        self.amount_yes30_button = ttk.Button(buy_button_frame, text="Amount-Yes30", width=15)  
+        self.amount_yes30_button = ttk.Button(buy_button_frame, text="Amount-Yes30", width=10)  
         self.amount_yes30_button.bind('<Button-1>', self.click_amount)
         self.amount_yes30_button.grid(row=8, column=2, padx=5, pady=5)
         # 第一行 NO
-        self.amount_no0_button = ttk.Button(buy_button_frame, text="Amount-No0", width=15)
+        self.amount_no0_button = ttk.Button(buy_button_frame, text="Amount-No0", width=10)
         self.amount_no0_button.bind('<Button-1>', self.click_amount)
         self.amount_no0_button.grid(row=9, column=0, padx=5, pady=5)
         
-        self.amount_no1_button = ttk.Button(buy_button_frame, text="Amount-No1", width=15)
+        self.amount_no1_button = ttk.Button(buy_button_frame, text="Amount-No1", width=10)
         self.amount_no1_button.bind('<Button-1>', self.click_amount)
         self.amount_no1_button.grid(row=9, column=1, padx=5, pady=5)
 
-        self.amount_no2_button = ttk.Button(buy_button_frame, text="Amount-No2", width=15)
+        self.amount_no2_button = ttk.Button(buy_button_frame, text="Amount-No2", width=10)
         self.amount_no2_button.bind('<Button-1>', self.click_amount)
         self.amount_no2_button.grid(row=9, column=2, padx=5, pady=5)
 
-        self.amount_no3_button = ttk.Button(buy_button_frame, text="Amount-No3", width=15)
+        self.amount_no3_button = ttk.Button(buy_button_frame, text="Amount-No3", width=10)
         self.amount_no3_button.bind('<Button-1>', self.click_amount)
         self.amount_no3_button.grid(row=9, column=3, padx=5, pady=5)
 
-        self.amount_no4_button = ttk.Button(buy_button_frame, text="Amount-No4", width=15)
+        self.amount_no4_button = ttk.Button(buy_button_frame, text="Amount-No4", width=10)
         self.amount_no4_button.bind('<Button-1>', self.click_amount)
         self.amount_no4_button.grid(row=10, column=0, padx=5, pady=5)
 
-        self.amount_no5_button = ttk.Button(buy_button_frame, text="Amount-No5", width=15)
+        self.amount_no5_button = ttk.Button(buy_button_frame, text="Amount-No5", width=10)
         self.amount_no5_button.bind('<Button-1>', self.click_amount)
         self.amount_no5_button.grid(row=10, column=1, padx=5, pady=5)
 
-        self.amount_no6_button = ttk.Button(buy_button_frame, text="Amount-No6", width=15)
+        self.amount_no6_button = ttk.Button(buy_button_frame, text="Amount-No6", width=10)
         self.amount_no6_button.bind('<Button-1>', self.click_amount)
         self.amount_no6_button.grid(row=10, column=2, padx=5, pady=5)
 
-        self.amount_no7_button = ttk.Button(buy_button_frame, text="Amount-No7", width=15)
+        self.amount_no7_button = ttk.Button(buy_button_frame, text="Amount-No7", width=10)
         self.amount_no7_button.bind('<Button-1>', self.click_amount)
         self.amount_no7_button.grid(row=10, column=3, padx=5, pady=5)
 
-        self.amount_no8_button = ttk.Button(buy_button_frame, text="Amount-No8", width=15)
+        self.amount_no8_button = ttk.Button(buy_button_frame, text="Amount-No8", width=10)
         self.amount_no8_button.bind('<Button-1>', self.click_amount)
         self.amount_no8_button.grid(row=11, column=0, padx=5, pady=5)
 
-        self.amount_no9_button = ttk.Button(buy_button_frame, text="Amount-No9", width=15)
+        self.amount_no9_button = ttk.Button(buy_button_frame, text="Amount-No9", width=10)
         self.amount_no9_button.bind('<Button-1>', self.click_amount)
         self.amount_no9_button.grid(row=11, column=1, padx=5, pady=5)
 
-        self.amount_no10_button = ttk.Button(buy_button_frame, text="Amount-No10", width=15)
+        self.amount_no10_button = ttk.Button(buy_button_frame, text="Amount-No10", width=10)
         self.amount_no10_button.bind('<Button-1>', self.click_amount)
         self.amount_no10_button.grid(row=11, column=2, padx=5, pady=5)
 
-        self.amount_no11_button = ttk.Button(buy_button_frame, text="Amount-No11", width=15)
+        self.amount_no11_button = ttk.Button(buy_button_frame, text="Amount-No11", width=10)
         self.amount_no11_button.bind('<Button-1>', self.click_amount)
         self.amount_no11_button.grid(row=11, column=3, padx=5, pady=5)
 
         # 第八行按钮 - Amount-No12 到 Amount-No14
-        self.amount_no12_button = ttk.Button(buy_button_frame, text="Amount-No12", width=15)
+        self.amount_no12_button = ttk.Button(buy_button_frame, text="Amount-No12", width=10)
         self.amount_no12_button.bind('<Button-1>', self.click_amount)
         self.amount_no12_button.grid(row=12, column=0, padx=5, pady=5)
 
-        self.amount_no13_button = ttk.Button(buy_button_frame, text="Amount-No13", width=15)
+        self.amount_no13_button = ttk.Button(buy_button_frame, text="Amount-No13", width=10)
         self.amount_no13_button.bind('<Button-1>', self.click_amount)
         self.amount_no13_button.grid(row=12, column=1, padx=5, pady=5)
 
-        self.amount_no14_button = ttk.Button(buy_button_frame, text="Amount-No14", width=15)
+        self.amount_no14_button = ttk.Button(buy_button_frame, text="Amount-No14", width=10)
         self.amount_no14_button.bind('<Button-1>', self.click_amount)
         self.amount_no14_button.grid(row=12, column=2, padx=5, pady=5)
 
-        self.amount_no15_button = ttk.Button(buy_button_frame, text="Amount-No15", width=15)
+        self.amount_no15_button = ttk.Button(buy_button_frame, text="Amount-No15", width=10)
         self.amount_no15_button.bind('<Button-1>', self.click_amount)
         self.amount_no15_button.grid(row=12, column=3, padx=5, pady=5)
 
-        self.amount_no16_button = ttk.Button(buy_button_frame, text="Amount-No16", width=15)
+        self.amount_no16_button = ttk.Button(buy_button_frame, text="Amount-No16", width=10)
         self.amount_no16_button.bind('<Button-1>', self.click_amount)
         self.amount_no16_button.grid(row=13, column=0, padx=5, pady=5)
 
-        self.amount_no17_button = ttk.Button(buy_button_frame, text="Amount-No17", width=15)
+        self.amount_no17_button = ttk.Button(buy_button_frame, text="Amount-No17", width=10)
         self.amount_no17_button.bind('<Button-1>', self.click_amount)
         self.amount_no17_button.grid(row=13, column=1, padx=5, pady=5)
 
-        self.amount_no18_button = ttk.Button(buy_button_frame, text="Amount-No18", width=15)
+        self.amount_no18_button = ttk.Button(buy_button_frame, text="Amount-No18", width=10)
         self.amount_no18_button.bind('<Button-1>', self.click_amount)
         self.amount_no18_button.grid(row=13, column=2, padx=5, pady=5)
 
-        self.amount_no19_button = ttk.Button(buy_button_frame, text="Amount-No19", width=15)
+        self.amount_no19_button = ttk.Button(buy_button_frame, text="Amount-No19", width=10)    
         self.amount_no19_button.bind('<Button-1>', self.click_amount)
         self.amount_no19_button.grid(row=13, column=3, padx=5, pady=5)
 
-        self.amount_no20_button = ttk.Button(buy_button_frame, text="Amount-No20", width=15)
+        self.amount_no20_button = ttk.Button(buy_button_frame, text="Amount-No20", width=10)
         self.amount_no20_button.bind('<Button-1>', self.click_amount)
         self.amount_no20_button.grid(row=14, column=0, padx=5, pady=5)
 
-        self.amount_no21_button = ttk.Button(buy_button_frame, text="Amount-No21", width=15)
+        self.amount_no21_button = ttk.Button(buy_button_frame, text="Amount-No21", width=10)
         self.amount_no21_button.bind('<Button-1>', self.click_amount)
         self.amount_no21_button.grid(row=14, column=1, padx=5, pady=5)
 
-        self.amount_no22_button = ttk.Button(buy_button_frame, text="Amount-No22", width=15)
+        self.amount_no22_button = ttk.Button(buy_button_frame, text="Amount-No22", width=10)
         self.amount_no22_button.bind('<Button-1>', self.click_amount)
         self.amount_no22_button.grid(row=14, column=2, padx=5, pady=5)
 
-        self.amount_no23_button = ttk.Button(buy_button_frame, text="Amount-No23", width=15)
+        self.amount_no23_button = ttk.Button(buy_button_frame, text="Amount-No23", width=10)
         self.amount_no23_button.bind('<Button-1>', self.click_amount)
         self.amount_no23_button.grid(row=14, column=3, padx=5, pady=5)
 
-        self.amount_no24_button = ttk.Button(buy_button_frame, text="Amount-No24", width=15)
+        self.amount_no24_button = ttk.Button(buy_button_frame, text="Amount-No24", width=10)
         self.amount_no24_button.bind('<Button-1>', self.click_amount)
         self.amount_no24_button.grid(row=15, column=0, padx=5, pady=5)
 
-        self.amount_no25_button = ttk.Button(buy_button_frame, text="Amount-No25", width=15)
+        self.amount_no25_button = ttk.Button(buy_button_frame, text="Amount-No25", width=10)
         self.amount_no25_button.bind('<Button-1>', self.click_amount)
         self.amount_no25_button.grid(row=15, column=1, padx=5, pady=5)
 
-        self.amount_no26_button = ttk.Button(buy_button_frame, text="Amount-No26", width=15)
+        self.amount_no26_button = ttk.Button(buy_button_frame, text="Amount-No26", width=10)
         self.amount_no26_button.bind('<Button-1>', self.click_amount)
         self.amount_no26_button.grid(row=15, column=2, padx=5, pady=5)
 
-        self.amount_no27_button = ttk.Button(buy_button_frame, text="Amount-No27", width=15)
+        self.amount_no27_button = ttk.Button(buy_button_frame, text="Amount-No27", width=10)
         self.amount_no27_button.bind('<Button-1>', self.click_amount)
         self.amount_no27_button.grid(row=15, column=3, padx=5, pady=5)
 
-        self.amount_no28_button = ttk.Button(buy_button_frame, text="Amount-No28", width=15)
+        self.amount_no28_button = ttk.Button(buy_button_frame, text="Amount-No28", width=10)    
         self.amount_no28_button.bind('<Button-1>', self.click_amount)
         self.amount_no28_button.grid(row=16, column=0, padx=5, pady=5)
 
-        self.amount_no29_button = ttk.Button(buy_button_frame, text="Amount-No29", width=15)
+        self.amount_no29_button = ttk.Button(buy_button_frame, text="Amount-No29", width=10)    
         self.amount_no29_button.bind('<Button-1>', self.click_amount)
         self.amount_no29_button.grid(row=16, column=1, padx=5, pady=5)
 
-        self.amount_no30_button = ttk.Button(buy_button_frame, text="Amount-No30", width=15)
+        self.amount_no30_button = ttk.Button(buy_button_frame, text="Amount-No30", width=10)
         self.amount_no30_button.bind('<Button-1>', self.click_amount)
         self.amount_no30_button.grid(row=16, column=2, padx=5, pady=5)
 
@@ -1117,37 +1126,37 @@ class CryptoTrader:
 
         # 修改卖出按钮区域
         sell_frame = ttk.LabelFrame(scrollable_frame, text="卖出按钮", padding=(10, 5))
-        sell_frame.pack(fill="x", padx=10, pady=5)
+        sell_frame.pack(fill="x", padx=2, pady=5)
 
         # 创建按钮框架
         button_frame = ttk.Frame(sell_frame)
-        button_frame.pack(expand=True)  # 添加expand=True使容器居
+        button_frame.pack(side=tk.LEFT, fill="x", padx=2, pady=5)  # 添加expand=True使容器居
 
         # 第一行按钮
-        self.position_sell_yes_button = ttk.Button(button_frame, text="Positions-Sell-Yes", width=15,
+        self.position_sell_yes_button = ttk.Button(button_frame, text="Positions-Sell-Yes", width=13,
                                                  command=self.click_position_sell)
-        self.position_sell_yes_button.grid(row=0, column=0, padx=5, pady=5)
+        self.position_sell_yes_button.grid(row=0, column=0, padx=2, pady=5)
 
-        self.position_sell_no_button = ttk.Button(button_frame, text="Positions-Sell-No", width=15,
+        self.position_sell_no_button = ttk.Button(button_frame, text="Positions-Sell-No", width=13,
                                                 command=self.click_position_sell_no)
-        self.position_sell_no_button.grid(row=0, column=1, padx=5, pady=5)
+        self.position_sell_no_button.grid(row=0, column=1, padx=2, pady=5)
 
-        self.sell_profit_button = ttk.Button(button_frame, text="Sell-卖出", width=15,
+        self.sell_profit_button = ttk.Button(button_frame, text="Sell-卖出", width=10,
                                            command=self.click_profit_sell)
-        self.sell_profit_button.grid(row=0, column=2, padx=5, pady=5)
-
-        self.sell_button = ttk.Button(button_frame, text="Sell", width=15,
-                                    command=self.click_sell)
-        self.sell_button.grid(row=0, column=3, padx=5, pady=5)
+        self.sell_profit_button.grid(row=0, column=2, padx=2, pady=5)
 
         # 第二行按钮
-        self.sell_yes_button = ttk.Button(button_frame, text="Sell-Yes", width=15,
+        self.sell_yes_button = ttk.Button(button_frame, text="Sell-Yes", width=10,
                                         command=self.click_sell_yes)
-        self.sell_yes_button.grid(row=1, column=0, padx=5, pady=5)
+        self.sell_yes_button.grid(row=1, column=0, padx=2, pady=5)
 
-        self.sell_no_button = ttk.Button(button_frame, text="Sell-No", width=15,
+        self.sell_no_button = ttk.Button(button_frame, text="Sell-No", width=10,
                                        command=self.click_sell_no)
-        self.sell_no_button.grid(row=1, column=1, padx=5, pady=5)
+        self.sell_no_button.grid(row=1, column=1, padx=2, pady=5)
+
+        self.sell_button = ttk.Button(button_frame, text="Sell", width=10,
+                                    command=self.click_sell)
+        self.sell_button.grid(row=1, column=2, padx=2, pady=5)
 
         # 配置列权重使按钮均匀分布
         for i in range(4):
@@ -1352,22 +1361,23 @@ class CryptoTrader:
         """在新线程中执行浏览器操作"""
         try:
             self.update_status(f"正在尝试访问: {new_url}")
+            
             if not self.driver:
                 chrome_options = Options()
                 chrome_options.debugger_address = "127.0.0.1:9222"
+                chrome_options.add_argument('--no-sandbox')
+                chrome_options.add_argument('--disable-dev-shm-usage')
+                
+                # Linux特定的Chrome配置
+                if platform.system() == 'Linux':
+                    chrome_options.add_argument('--disable-gpu')
+                    chrome_options.add_argument('--disable-software-rasterizer')
                 try:
                     self.driver = webdriver.Chrome(options=chrome_options)
-                    self.update_status("成功连接到浏览器")
+                    self.update_status("连接到浏览器")
                 except Exception as e:
-                    self.logger.error(f"连接浏览器详细错误: {str(e)}")
+                    self.logger.error(f"连接浏览器失败: {str(e)}")
                     self._show_error_and_reset("无法连接Chrome浏览器，请确保已运行start_chrome.sh")
-                    return 
-                try:
-                    self.driver.get(new_url)
-                    self.update_status(f"成功访问: {new_url}")
-                except Exception as e:
-                    self.logger.error(f"访问URL失败: {str(e)}")
-                    self._show_error_and_reset(f"访问 {new_url} 失败")
                     return
             try:
                 # 在当前标签页打开URL
