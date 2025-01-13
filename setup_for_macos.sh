@@ -167,8 +167,14 @@ python3 crypto_trader_22.py
 EOL
 
 
-chmod +x run_trader.sh
-chmod +x crypto_trader.py
+chmod +x 10.sh
+chmod +x 12.sh
+chmod +x 14.sh
+chmod +x 16.sh
+chmod +x 18.sh
+chmod +x 20.sh
+chmod +x 22.sh
+
 
 # 验证安装
 echo "=== 验证安装 ==="
