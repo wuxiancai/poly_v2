@@ -111,13 +111,61 @@ fi
 
 chmod +x start_chrome.sh
 # 创建自动启动脚本
-cat > run_trader.sh << 'EOL'
+cat > 10.sh << 'EOL'
 # 激活虚拟环境
 source venv/bin/activate
 
 # 运行交易程序
-python3 crypto_trader.py
+python3 crypto_trader_10.py
 EOL
+cat > 12.sh << 'EOL'
+# 激活虚拟环境
+source venv/bin/activate
+
+# 运行交易程序
+python3 crypto_trader_12.py
+EOL
+
+cat > 14.sh << 'EOL'
+# 激活虚拟环境
+source venv/bin/activate
+
+# 运行交易程序
+python3 crypto_trader_14.py
+EOL
+
+cat > 16.sh << 'EOL'
+# 激活虚拟环境
+source venv/bin/activate
+
+# 运行交易程序
+python3 crypto_trader_16.py
+EOL
+
+cat > 18.sh << 'EOL'
+# 激活虚拟环境
+source venv/bin/activate
+
+# 运行交易程序
+python3 crypto_trader_18.py
+EOL
+
+cat > 20.sh << 'EOL'
+# 激活虚拟环境
+source venv/bin/activate
+
+# 运行交易程序
+python3 crypto_trader_20.py
+EOL
+
+cat > 22.sh << 'EOL'
+# 激活虚拟环境
+source venv/bin/activate
+
+# 运行交易程序
+python3 crypto_trader_22.py
+EOL
+
 
 chmod +x run_trader.sh
 chmod +x crypto_trader.py
