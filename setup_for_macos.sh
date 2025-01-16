@@ -111,13 +111,7 @@ fi
 
 chmod +x start_chrome.sh
 # 创建自动启动脚本
-cat > 10.sh << 'EOL'
-# 激活虚拟环境
-source venv/bin/activate
 
-# 运行交易程序
-python3 crypto_trader_10.py
-EOL
 cat > 12.sh << 'EOL'
 # 激活虚拟环境
 source venv/bin/activate

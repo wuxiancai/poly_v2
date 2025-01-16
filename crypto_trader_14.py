@@ -1249,6 +1249,26 @@ class CryptoTrader:
         """安排重试更新金额"""
         self.root.after(5000, self.set_yes_no_cash)  # 5秒后重试
 
+    def start_url_monitoring(self):
+        """启动URL监控"""
+        def check_url():
+            if self.running and self.driver:
+                try:
+                    current_page_url = self.driver.current_url
+                    if current_page_url != self.current_url:
+                        self.logger.warning(f"检测到URL变化，正在恢复...")
+                        self.driver.get(self.current_url)
+                        self.logger.info("已恢复到正确的监控网址")
+                except Exception as e:
+                    self.logger.error(f"URL监控出错: {str(e)}")
+                
+                # 继续监控
+                if self.running:
+                    self.url_check_timer = self.root.after(1000, check_url)  # 每秒检查一次
+        
+        # 开始第一次检查
+        self.url_check_timer = self.root.after(1000, check_url)
+
     def start_monitoring(self):
         """开始监控"""
         # 直接使用当前显示的网址
@@ -1276,7 +1296,8 @@ class CryptoTrader:
         self.update_amount_button['state'] = 'normal'
         # 自动点击更新金额按钮
         self.schedule_update_amount()
-
+        # 启动URL监控
+        self.start_url_monitoring()
         # 启动登录状态监控
         self.start_login_monitoring()
         # 启动页面刷新定时器
@@ -1410,6 +1431,10 @@ class CryptoTrader:
         """停止监控"""
         try:
             self.running = False
+            # 停止URL监控
+            if self.url_check_timer:
+                self.root.after_cancel(self.url_check_timer)
+                self.url_check_timer = None
             # 停止登录状态监控
             if self.login_check_timer:
                 self.root.after_cancel(self.login_check_timer)

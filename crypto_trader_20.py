@@ -349,7 +349,7 @@ class CryptoTrader:
         ttk.Label(initial_frame, text="初始金额(%):").pack(side=tk.LEFT)
         self.initial_amount_entry = ttk.Entry(initial_frame, width=4)
         self.initial_amount_entry.pack(side=tk.LEFT)
-        self.initial_amount_entry.insert(0, "10.2")
+        self.initial_amount_entry.insert(0, "4.9")
         
         # 反水一次设置
         first_frame = ttk.Frame(amount_frame)
@@ -373,14 +373,14 @@ class CryptoTrader:
         ttk.Label(profit_frame, text="利润率(%):").pack(side=tk.LEFT)
         self.profit_rate_entry = ttk.Entry(profit_frame, width=4)
         self.profit_rate_entry.pack(side=tk.LEFT)
-        self.profit_rate_entry.insert(0, "10")
+        self.profit_rate_entry.insert(0, "5")
 
         # 翻倍周数
         weeks_frame = ttk.Frame(amount_frame)
         weeks_frame.pack(side=tk.LEFT, padx=2)
         self.doubling_weeks_entry = ttk.Entry(weeks_frame, width=2, style='Red.TEntry')
         self.doubling_weeks_entry.pack(side=tk.LEFT)
-        self.doubling_weeks_entry.insert(0, "7")
+        self.doubling_weeks_entry.insert(0, "13")
         ttk.Label(weeks_frame, text="周翻倍", style='Red.TLabel').pack(side=tk.LEFT)
 
         # 交易次数按钮放在trades_frame中
@@ -406,7 +406,7 @@ class CryptoTrader:
         # 14按钮
         self.trade_buttons["14"] = ttk.Button(buttons_frame, text="14", width=3, 
                                             command=lambda: self.set_amount_values("14"),
-                                            style='Blue.TButton')
+                                            style='Black.TButton')
         self.trade_buttons["14"].grid(row=1, column=3, padx=2, pady=3)
 
         # 16按钮
@@ -424,7 +424,7 @@ class CryptoTrader:
         # 20按钮
         self.trade_buttons["20"] = ttk.Button(buttons_frame, text="20", width=3, 
                                             command=lambda: self.set_amount_values("20"),
-                                            style='Black.TButton')
+                                            style='Blue.TButton')
         self.trade_buttons["20"].grid(row=1, column=6, padx=2, pady=3)
         
         # 22按钮
@@ -1249,6 +1249,26 @@ class CryptoTrader:
         """安排重试更新金额"""
         self.root.after(5000, self.set_yes_no_cash)  # 5秒后重试
 
+    def start_url_monitoring(self):
+        """启动URL监控"""
+        def check_url():
+            if self.running and self.driver:
+                try:
+                    current_page_url = self.driver.current_url
+                    if current_page_url != self.current_url:
+                        self.logger.warning(f"检测到URL变化，正在恢复...")
+                        self.driver.get(self.current_url)
+                        self.logger.info("已恢复到正确的监控网址")
+                except Exception as e:
+                    self.logger.error(f"URL监控出错: {str(e)}")
+                
+                # 继续监控
+                if self.running:
+                    self.url_check_timer = self.root.after(1000, check_url)  # 每秒检查一次
+        
+        # 开始第一次检查
+        self.url_check_timer = self.root.after(1000, check_url)
+
     def start_monitoring(self):
         """开始监控"""
         # 直接使用当前显示的网址
@@ -1276,7 +1296,8 @@ class CryptoTrader:
         self.update_amount_button['state'] = 'normal'
         # 自动点击更新金额按钮
         self.schedule_update_amount()
-
+        # 启动URL监控
+        self.start_url_monitoring()
         # 启动登录状态监控
         self.start_login_monitoring()
         # 启动页面刷新定时器
@@ -1410,6 +1431,10 @@ class CryptoTrader:
         """停止监控"""
         try:
             self.running = False
+            # 停止URL监控
+            if self.url_check_timer:
+                self.root.after_cancel(self.url_check_timer)
+                self.url_check_timer = None
             # 停止登录状态监控
             if self.login_check_timer:
                 self.root.after_cancel(self.login_check_timer)
